@@ -1,4 +1,4 @@
-package zenapi
+package zenmoney
 
 import (
 	"bytes"

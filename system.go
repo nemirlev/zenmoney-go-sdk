@@ -1,4 +1,4 @@
-package zenapi
+package zenmoney
 
 //
 // System entities available for read-only access
