@@ -1,10 +1,4 @@
-package zenmoney
-
-import (
-	"encoding/json"
-	"fmt"
-	"time"
-)
+package models
 
 // Deletion - информация по удаленному объекту. Некоторые объекты, например Transaction, ReminderMarker, Budget могут быть помечены удаленными полем внутри себя, но все пользовательские объекты, у которых есть id, могут быть удалены окончательно через deletion. При получении объекта deletion получившая сторона обязана удалить у себя этот объект.
 // Пример:
@@ -62,40 +56,4 @@ type Request struct {
 	ReminderMarker         []ReminderMarker   `json:"reminderMarker,omitempty"`
 	Transaction            []Transaction      `json:"transaction,omitempty"`
 	Deletion               []Deletion         `json:"deletion,omitempty"`
-}
-
-// Sync отправляет запрос на отправку и получение изменений из ZenMoney
-func (c *Client) Sync(body Request) (Response, error) {
-	res, err := c.sendRequest("diff/", "POST", body)
-	if err != nil {
-		return Response{}, fmt.Errorf("failed to send request: %w", err)
-	}
-
-	var result Response
-	err = json.Unmarshal([]byte(res), &result)
-	if err != nil {
-		return Response{}, fmt.Errorf("failed to unmarshal response body: %w", err)
-	}
-
-	return result, nil
-}
-
-// FullSync отправляет запрос на получение всех данных из ZenMoney
-func (c *Client) FullSync() (Response, error) {
-	body := Request{
-		CurrentClientTimestamp: int(time.Now().Unix()),
-		ServerTimestamp:        0,
-	}
-
-	return c.Sync(body)
-}
-
-// SyncSince отправляет запрос на получение изменений из ZenMoney c момента последней синхронизации
-func (c *Client) SyncSince(lastSync time.Time) (Response, error) {
-	body := Request{
-		CurrentClientTimestamp: int(time.Now().Unix()),
-		ServerTimestamp:        int(lastSync.Unix()),
-	}
-
-	return c.Sync(body)
 }
