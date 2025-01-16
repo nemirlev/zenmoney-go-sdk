@@ -1,4 +1,4 @@
-package zenapi
+package models
 
 //
 // User entities available for reading, creating, updating, and deleting

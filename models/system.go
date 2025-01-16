@@ -1,4 +1,4 @@
-package zenapi
+package models
 
 //
 // System entities available for read-only access
