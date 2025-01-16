@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 🐛 Bug Fixes
+
+- Update branch filters for workflows
+
 ### ⚙️ Miscellaneous Tasks
 
 - Update changelog workflow for better auth
