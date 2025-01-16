@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### ⚙️ Miscellaneous Tasks
+
+- Update changelog workflow for better auth
+
+## [2.0.0] - 2025-01-16
+
 ### 🚀 Features
 
 - Add new sync methods and improve API client
