@@ -32,5 +32,5 @@ jobs:
           git config --global user.email 'github-actions@github.com'
           git pull origin main  # Add this to get latest changes
           git add CHANGELOG.md
-          git commit -m "Обновление CHANGELOG.md"
+          git commit -m "Updated CHANGELOG.md"
           git push origin main  # Simplified push command
