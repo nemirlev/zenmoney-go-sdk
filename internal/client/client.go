@@ -145,3 +145,45 @@ func (c *Client) ForceSyncEntities(ctx context.Context, entityTypes ...models.En
 
 	return c.Sync(ctx, body)
 }
+
+// Suggest sends a suggestion request to the ZenMoney API for a single transaction.
+// It sends a POST request to the suggest endpoint with the provided transaction data.
+// Only the fields present in the input transaction will be considered for suggestions.
+//
+// Parameters:
+//   - ctx: Context for the request
+//   - transaction: Transaction object, can be partially filled
+//
+// Returns:
+//   - Transaction: Transaction object with suggested values
+//   - error: Any error that occurred during the request
+func (c *Client) Suggest(ctx context.Context, transaction models.Transaction) (models.Transaction, error) {
+	resBody, err := c.sendRequest(ctx, "suggest/", http.MethodPost, transaction)
+	if err != nil {
+		return models.Transaction{}, err
+	}
+
+	var result models.Transaction
+	if err := json.Unmarshal(resBody, &result); err != nil {
+		return models.Transaction{}, errors.NewError(errors.ErrInvalidRequest,
+			"failed to unmarshal response", err)
+	}
+
+	return result, nil
+}
+
+// SuggestBatch sends a batch suggestion request to the ZenMoney API for multiple transactions.
+func (c *Client) SuggestBatch(ctx context.Context, transactions []models.Transaction) ([]models.Transaction, error) {
+	resBody, err := c.sendRequest(ctx, "suggest/", http.MethodPost, transactions)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []models.Transaction
+	if err := json.Unmarshal(resBody, &result); err != nil {
+		return nil, errors.NewError(errors.ErrInvalidRequest,
+			"failed to unmarshal response", err)
+	}
+
+	return result, nil
+}
