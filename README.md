@@ -1,63 +1,138 @@
-# ZenMoney API SDK на Go.
+# ZenMoney API GO SDK.
 
-[![GoDoc](https://godoc.org/github.com/zenapi/zenapi?status.svg)](https://godoc.org/github.com/nemirlev/zenapi)
-[![Go Report Card](https://goreportcard.com/badge/github.com/nemirlev/zenapi)](https://goreportcard.com/report/github.com/nemirlev/zenapi)
-![GitHub License](https://img.shields.io/github/license/nemirlev/zenapi)
-![GitHub go.mod Go version (subdirectory of monorepo)](https://img.shields.io/github/go-mod/go-version/nemirlev/zenapi)
-![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/nemirlev/zenapi)
-[![codecov](https://codecov.io/gh/nemirlev/zenapi/graph/badge.svg?token=J2S3N967Q7)](https://codecov.io/gh/nemirlev/zenapi)
+[![GoDoc](https://godoc.org/github.com/zenapi/zenapi?status.svg)](https://godoc.org/github.com/nemirlev/zenmoney-go-sdk)
+[![Go Report Card](https://goreportcard.com/badge/github.com/nemirlev/zenmoney-go-sdk)](https://goreportcard.com/report/github.com/nemirlev/zenmoney-go-sdk)
+![GitHub License](https://img.shields.io/github/license/nemirlev/zenmoney-go-sdk)
+![GitHub go.mod Go version (subdirectory of monorepo)](https://img.shields.io/github/go-mod/go-version/nemirlev/zenmoney-go-sdk)
+![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/nemirlev/zenmoney-go-sdk)
+[![codecov](https://codecov.io/gh/nemirlev/zenmoney-go-sdk/graph/badge.svg?token=J2S3N967Q7)](https://codecov.io/gh/nemirlev/zenmoney-go-sdk)
 
-Это SDK предназначено для взаимодействия с ZenMoney API. На данный момент поддерживает только метод diff, так как
-suggestion работает достаточно странно и не понятно на сколько он нужен.
+A robust and easy-to-use Go SDK for interacting with the ZenMoney API. This SDK provides a type-safe way to work with
+ZenMoney's financial data synchronization API, including accounts, transactions, budgets, and more.
 
-## Установка
+## Features
 
-Чтобы установить этот пакет, вы можете использовать команду `go get`:
+- 🚀 Easy-to-use, idiomatic Go API
+- 🔒 Built-in retry mechanism with configurable policies
+- 💪 Full type safety for all ZenMoney entities
+- 🛡️ Comprehensive error handling
+- ⚡ Support for all ZenMoney API operations
+- 📚 Extensive documentation and examples
+
+## Installation
 
 ```bash
-go get github.com/nemirlev/zenapi
+go get github.com/nemirlev/zenmoney-go-sdk
 ```
 
-## Использование
-
-Для использования этого SDK вам нужно импортировать его в ваш проект:
+## Quick Start
 
 ```go
-import "github.com/nemirlev/zenapi"
-```
+package main
 
-Получите токен через [Zerro.app](https://zerro.app/token). Полученый токен передается в качестве аргумента NewClient(), тем самым вы создаете нового клиента:
-```go
-token := "your_zenmoney_token_here"
-client, err := zenapi.NewClient(token)
-if err != nil {
-// обработка ошибки
+import (
+	"context"
+	"log"
+
+	"github.com/nemirlev/zenmoney-go-sdk/api"
+)
+
+func main() {
+	// Create a new client
+	client, err := api.NewClient("your-token-here")
+	if err != nil {
+		log.Fatalf("Failed to create client: %v", err)
+	}
+
+	// Perform full sync
+	ctx := context.Background()
+	resp, err := client.FullSync(ctx)
+	if err != nil {
+		log.Fatalf("Sync failed: %v", err)
+	}
+
+	// Work with the data
+	for _, account := range resp.Account {
+		log.Printf("Account: %s, Balance: %.2f", account.Title, *account.Balance)
+	}
 }
 ```
 
-## Методы
+## Configuration Options
 
-В настоящее время SDK поддерживает следующие методы:
+The SDK supports various configuration options through the functional options pattern:
 
-* Sync(body Request) - синхронизация данных. Данный запрос используется для получения и отправки изменений в данных с
-  момента
-  последней синхронизации.
-* FullSync() - полная синхронизация данных. Данный запрос используется для получения всех данных из ZenMoney. Возвращает
-  структуру Response
+```go
+client, err := api.NewClient(
+    "your-token-here",
+    api.WithTimeout(45*time.Second),
+    api.WithRetryPolicy(5, 2*time.Second),
+    api.WithBaseURL("https://custom-api.zenmoney.ru/v8/"),
+)
+```
 
-## Лицензия
+## Available Operations
 
-Этот проект лицензирован под лицензией MIT - подробности см. в файле LICENSE.
+- Full synchronization
+- Incremental synchronization from a specific timestamp
+- Force sync specific entities
+- Custom sync with specific parameters
+- Suggestions for categories and operation merchants
 
-## Вклад в проект
+## Error Handling
 
-Мы приветствуем вклад от сообщества! Если вы хотите внести изменения в код, пожалуйста, следуйте этим шагам:
+The SDK provides structured error types for better error handling:
 
-1. Форкните репозиторий.
-2. Создайте новую ветку для ваших изменений.
-3. Сделайте изменения в вашей ветке.
-4. Отправьте Pull Request с описанием ваших изменений.
+```go
+if err != nil {
+    var apiErr *errors.Error
+    if errors.As(err, &apiErr) {
+        switch apiErr.Code {
+        case errors.ErrInvalidToken:
+            // Handle authentication error
+        case errors.ErrServerError:
+            // Handle server error
+        case errors.ErrNetworkError:
+            // Handle network error
+        }
+    }
+}
+```
 
-Пожалуйста, убедитесь, что ваш код соответствует стандартам Go и что все тесты проходят перед отправкой PR.
+## Examples
 
-> Если вы хотите помочь, но не знаете с чего начать, то посмотрите Issues и создайте свой, если не нашли подходящего.
+Check out the [examples](./examples) directory for more detailed usage examples:
+
+- Basic usage
+- Configuration options
+- Sync operations
+- Error handling
+- Working with budgets
+- Working with merchants
+
+## API Documentation
+
+For detailed API documentation, visit
+the [Go package documentation](https://pkg.go.dev/github.com/nemirlev/zenmoney-go-sdk).
+
+For ZenMoney API documentation, visit
+the [official API documentation](https://github.com/zenmoney/ZenPlugins/wiki/ZenMoney-API).
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- Thanks to the ZenMoney team for providing the API
+- Inspired by other excellent Go SDKs in the community
