@@ -2,6 +2,35 @@
 
 All notable changes to this project will be documented in this file.
 
+## [unreleased]
+
+### 🚀 Features
+
+- Add new sync methods and improve API client
+- Remove example environment file
+- Add examples for ZenMoney SDK usage
+- Update README.md
+- Add suggestion functionality for transactions
+- Add new dependencies and tests
+
+### 🚜 Refactor
+
+- Update module name to zenmoney-go-sdk
+- Rename main.go to client.go
+- Rename package from zenapi to zenmoney
+- [**breaking**] Restructure project and enhance API client
+- Move diff request to single file
+- *(tests)* Clean up test code and improve error handling
+
+### 🧪 Testing
+
+- Add unit tests for custom error handling
+
+### ⚙️ Miscellaneous Tasks
+
+- Update Go version to 1.23.4
+- Update workflow actions to latest versions
+
 ## [1.3.3] - 2024-10-10
 
 ### 🚀 Features
@@ -47,14 +76,14 @@ All notable changes to this project will be documented in this file.
 
 ## [1.2.0] - 2023-12-16
 
-### FIX
+### 💼 Other
 
 - Убрал тег omitempty в структурах.
 - Поменял тип цвета в структуре tag
 
 ## [1.1.0] - 2023-12-06
 
-### Изменение
+### 💼 Other
 
 - Обновлен конструктор NewClient для принятия токена в качестве аргумента
 
