@@ -13,6 +13,10 @@ All notable changes to this project will be documented in this file.
 - Add suggestion functionality for transactions
 - Add new dependencies and tests
 
+### 🐛 Bug Fixes
+
+- Update release args for GoReleaser
+
 ### 🚜 Refactor
 
 - Update module name to zenmoney-go-sdk
