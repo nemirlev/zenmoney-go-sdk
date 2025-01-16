@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 ### ⚙️ Miscellaneous Tasks
 
 - Update changelog workflow for better auth
+- Simplify changelog update message
 
 ## [2.0.0] - 2025-01-16
 
