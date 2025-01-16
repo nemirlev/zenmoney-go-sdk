@@ -150,7 +150,7 @@ func (c *Client) ForceSyncEntities(ctx context.Context, entityTypes ...models.En
 // It sends a POST request to the suggest endpoint with the provided transaction data.
 // Only the fields present in the input transaction will be considered for suggestions.
 //
-// Parameters:
+// Parameters
 //   - ctx: Context for the request
 //   - transaction: Transaction object, can be partially filled
 //
