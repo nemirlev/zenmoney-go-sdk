@@ -13,15 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type mockRoundTripper struct {
-	response *http.Response
-	err      error
-}
-
-func (m *mockRoundTripper) RoundTrip(*http.Request) (*http.Response, error) {
-	return m.response, m.err
-}
-
 func setupTestServer(t *testing.T, handler http.HandlerFunc) (*httptest.Server, *Client) {
 	server := httptest.NewServer(handler)
 
@@ -30,7 +21,7 @@ func setupTestServer(t *testing.T, handler http.HandlerFunc) (*httptest.Server, 
 		server.URL+"/",
 		&http.Client{},
 		time.Second,
-		0, // Отключаем ретраи для тестов
+		0,
 		time.Second,
 	)
 	require.NoError(t, err)
@@ -70,21 +61,17 @@ func TestNewClient(t *testing.T) {
 func TestSync(t *testing.T) {
 	t.Run("successful sync", func(t *testing.T) {
 		server, client := setupTestServer(t, func(w http.ResponseWriter, r *http.Request) {
-			// Проверяем метод и путь
 			require.Equal(t, http.MethodPost, r.Method)
 			require.Equal(t, "/diff/", r.URL.Path)
 
-			// Проверяем заголовки
 			require.Equal(t, "Bearer test-token", r.Header.Get("Authorization"))
 			require.Equal(t, "application/json", r.Header.Get("Content-Type"))
 
-			// Проверяем тело запроса
 			var reqBody models.Request
 			require.NoError(t, json.NewDecoder(r.Body).Decode(&reqBody))
 			require.Greater(t, reqBody.CurrentClientTimestamp, 0)
 			require.Equal(t, 1642300700, reqBody.ServerTimestamp)
 
-			// Возвращаем ответ
 			response := models.Response{
 				ServerTimestamp: 1642300800,
 				Instrument: []models.Instrument{
@@ -98,7 +85,8 @@ func TestSync(t *testing.T) {
 					},
 				},
 			}
-			json.NewEncoder(w).Encode(response)
+			err := json.NewEncoder(w).Encode(response)
+			require.NoError(t, err)
 		})
 		defer server.Close()
 
@@ -146,7 +134,8 @@ func TestSync(t *testing.T) {
 
 	t.Run("handles invalid JSON response", func(t *testing.T) {
 		server, client := setupTestServer(t, func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte(`invalid json`))
+			_, err := w.Write([]byte(`invalid json`))
+			require.NoError(t, err)
 		})
 		defer server.Close()
 
@@ -164,18 +153,17 @@ func TestSuggest(t *testing.T) {
 			require.Equal(t, http.MethodPost, r.Method)
 			require.Equal(t, "/suggest/", r.URL.Path)
 
-			// Проверяем тело запроса
 			var reqTx models.Transaction
 			require.NoError(t, json.NewDecoder(r.Body).Decode(&reqTx))
 			require.Equal(t, "McDonalds", reqTx.Payee)
 
-			// Возвращаем предложение
 			suggestion := models.Transaction{
 				Payee:    "McDonalds",
 				Merchant: stringPtr("mcdonalds-1"),
 				Tag:      []string{"food", "fast-food"},
 			}
-			json.NewEncoder(w).Encode(suggestion)
+			err := json.NewEncoder(w).Encode(suggestion)
+			require.NoError(t, err)
 		})
 		defer server.Close()
 
@@ -210,14 +198,12 @@ func TestSuggestBatch(t *testing.T) {
 			require.Equal(t, http.MethodPost, r.Method)
 			require.Equal(t, "/suggest/", r.URL.Path)
 
-			// Проверяем тело запроса
 			var reqTxs []models.Transaction
 			require.NoError(t, json.NewDecoder(r.Body).Decode(&reqTxs))
 			require.Len(t, reqTxs, 2)
 			require.Equal(t, "McDonalds", reqTxs[0].Payee)
 			require.Equal(t, "Starbucks", reqTxs[1].Payee)
 
-			// Возвращаем предложения
 			suggestions := []models.Transaction{
 				{
 					Payee:    "McDonalds",
@@ -230,7 +216,8 @@ func TestSuggestBatch(t *testing.T) {
 					Tag:      []string{"food", "coffee"},
 				},
 			}
-			json.NewEncoder(w).Encode(suggestions)
+			err := json.NewEncoder(w).Encode(suggestions)
+			require.NoError(t, err)
 		})
 		defer server.Close()
 
@@ -252,7 +239,8 @@ func TestSuggestBatch(t *testing.T) {
 
 	t.Run("handles empty batch", func(t *testing.T) {
 		server, client := setupTestServer(t, func(w http.ResponseWriter, r *http.Request) {
-			json.NewEncoder(w).Encode([]models.Transaction{})
+			err := json.NewEncoder(w).Encode([]models.Transaction{})
+			require.NoError(t, err)
 		})
 		defer server.Close()
 
@@ -261,21 +249,18 @@ func TestSuggestBatch(t *testing.T) {
 		require.Empty(t, suggestions)
 	})
 }
+
 func TestFullSync(t *testing.T) {
 	t.Run("successful full sync with correct request", func(t *testing.T) {
 		server, client := setupTestServer(t, func(w http.ResponseWriter, r *http.Request) {
-			// Проверяем метод и путь
 			require.Equal(t, http.MethodPost, r.Method)
 			require.Equal(t, "/diff/", r.URL.Path)
 
-			// Проверяем body запроса
 			var req models.Request
 			err := json.NewDecoder(r.Body).Decode(&req)
 			require.NoError(t, err)
 
-			// В FullSync serverTimestamp должен быть 0
 			require.Equal(t, 0, req.ServerTimestamp)
-			// CurrentClientTimestamp должен быть текущим временем
 			require.Greater(t, req.CurrentClientTimestamp, 0)
 			require.LessOrEqual(t, req.CurrentClientTimestamp, int(time.Now().Unix()))
 
@@ -290,7 +275,8 @@ func TestFullSync(t *testing.T) {
 					},
 				},
 			}
-			json.NewEncoder(w).Encode(resp)
+			err = json.NewEncoder(w).Encode(resp)
+			require.NoError(t, err)
 		})
 		defer server.Close()
 
@@ -325,7 +311,6 @@ func TestSyncSince(t *testing.T) {
 			err := json.NewDecoder(r.Body).Decode(&req)
 			require.NoError(t, err)
 
-			// Проверяем, что timestamp соответствует переданному времени
 			require.Equal(t, int(lastSync.Unix()), req.ServerTimestamp)
 			require.Greater(t, req.CurrentClientTimestamp, int(lastSync.Unix()))
 
@@ -338,7 +323,8 @@ func TestSyncSince(t *testing.T) {
 					},
 				},
 			}
-			json.NewEncoder(w).Encode(resp)
+			err = json.NewEncoder(w).Encode(resp)
+			require.NoError(t, err)
 		})
 		defer server.Close()
 
@@ -351,7 +337,8 @@ func TestSyncSince(t *testing.T) {
 
 	t.Run("handles invalid response", func(t *testing.T) {
 		server, client := setupTestServer(t, func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("invalid json"))
+			_, err := w.Write([]byte("invalid json"))
+			require.NoError(t, err)
 		})
 		defer server.Close()
 
@@ -370,7 +357,6 @@ func TestForceSyncEntities(t *testing.T) {
 			err := json.NewDecoder(r.Body).Decode(&req)
 			require.NoError(t, err)
 
-			// Проверяем запрошенные сущности
 			require.Contains(t, req.ForceFetch, models.EntityTypeTransaction)
 			require.Contains(t, req.ForceFetch, models.EntityTypeAccount)
 			require.Len(t, req.ForceFetch, 2)
@@ -390,7 +376,8 @@ func TestForceSyncEntities(t *testing.T) {
 					},
 				},
 			}
-			json.NewEncoder(w).Encode(resp)
+			err = json.NewEncoder(w).Encode(resp)
+			require.NoError(t, err)
 		})
 		defer server.Close()
 
@@ -416,7 +403,8 @@ func TestForceSyncEntities(t *testing.T) {
 			resp := models.Response{
 				ServerTimestamp: int(time.Now().Unix()),
 			}
-			json.NewEncoder(w).Encode(resp)
+			err = json.NewEncoder(w).Encode(resp)
+			require.NoError(t, err)
 		})
 		defer server.Close()
 
@@ -428,7 +416,6 @@ func TestForceSyncEntities(t *testing.T) {
 
 	t.Run("handles context cancellation", func(t *testing.T) {
 		server, client := setupTestServer(t, func(w http.ResponseWriter, r *http.Request) {
-			// Имитируем долгий ответ
 			time.Sleep(100 * time.Millisecond)
 		})
 		defer server.Close()
@@ -441,7 +428,6 @@ func TestForceSyncEntities(t *testing.T) {
 	})
 }
 
-// Вспомогательная функция для создания указателя на string
 func stringPtr(s string) *string {
 	return &s
 }
