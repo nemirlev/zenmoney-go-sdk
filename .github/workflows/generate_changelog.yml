@@ -16,6 +16,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}  # Add this for authentication
 
       - name: Generate a changelog
         uses: orhun/git-cliff-action@v4
@@ -29,6 +30,7 @@ jobs:
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
+          git pull origin main  # Add this to get latest changes
           git add CHANGELOG.md
           git commit -m "Обновление CHANGELOG.md"
-          git push https://github.com/${{ github.repository }}.git HEAD:main
+          git push origin main  # Simplified push command
