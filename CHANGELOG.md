@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### 🐛 Bug Fixes
 
 - Update branch filters for workflows
+- Simplify workflow triggers
 
 ### ⚙️ Miscellaneous Tasks
 
