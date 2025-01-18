@@ -1,4 +1,4 @@
-module github.com/nemirlev/zenmoney-go-sdk
+module github.com/nemirlev/zenmoney-go-sdk/v2
 
 go 1.23.4
 
