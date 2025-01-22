@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 ### 🐛 Bug Fixes
 
+- Update SDK import paths to v2
+
+## [2.0.2] - 2025-01-18
+
+### 🐛 Bug Fixes
+
 - *(module)* Update module path to v2
 
 ## [2.0.1] - 2025-01-16
