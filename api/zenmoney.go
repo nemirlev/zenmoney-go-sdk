@@ -1,7 +1,7 @@
 package api
 
 import (
-	"github.com/nemirlev/zenmoney-go-sdk/internal/client"
+	"github.com/nemirlev/zenmoney-go-sdk/v2/internal/client"
 )
 
 type Client struct {

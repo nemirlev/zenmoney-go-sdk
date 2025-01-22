@@ -10,8 +10,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/nemirlev/zenmoney-go-sdk/internal/errors"
-	"github.com/nemirlev/zenmoney-go-sdk/models"
+	"github.com/nemirlev/zenmoney-go-sdk/v2/internal/errors"
+	"github.com/nemirlev/zenmoney-go-sdk/v2/models"
 )
 
 // Client represents internal implementation of ZenMoney API client

@@ -2,7 +2,7 @@ package api
 
 import (
 	"context"
-	"github.com/nemirlev/zenmoney-go-sdk/models"
+	"github.com/nemirlev/zenmoney-go-sdk/v2/models"
 )
 
 // Suggest requests suggestions for a single transaction. It can predict merchant, payee,
