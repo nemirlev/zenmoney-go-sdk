@@ -6,8 +6,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/nemirlev/zenmoney-go-sdk/api"
-	zerrors "github.com/nemirlev/zenmoney-go-sdk/internal/errors"
+	"github.com/nemirlev/zenmoney-go-sdk/v2/api"
+	zerrors "github.com/nemirlev/zenmoney-go-sdk/v2/internal/errors"
 )
 
 func main() {

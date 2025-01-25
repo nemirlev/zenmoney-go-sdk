@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nemirlev/zenmoney-go-sdk/internal/errors"
-	"github.com/nemirlev/zenmoney-go-sdk/models"
+	"github.com/nemirlev/zenmoney-go-sdk/v2/internal/errors"
+	"github.com/nemirlev/zenmoney-go-sdk/v2/models"
 	"github.com/stretchr/testify/require"
 )
 

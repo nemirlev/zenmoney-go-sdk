@@ -4,7 +4,7 @@ import (
 	stdErrors "errors"
 	"testing"
 
-	"github.com/nemirlev/zenmoney-go-sdk/internal/errors"
+	"github.com/nemirlev/zenmoney-go-sdk/v2/internal/errors"
 	"github.com/stretchr/testify/require"
 )
 

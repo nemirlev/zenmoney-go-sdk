@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/nemirlev/zenmoney-go-sdk/api"
+	"github.com/nemirlev/zenmoney-go-sdk/v2/api"
 )
 
 func main() {
