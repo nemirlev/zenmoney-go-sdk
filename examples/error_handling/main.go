@@ -21,8 +21,7 @@ func main() {
 	// Example of handling different error types
 	_, err = client.FullSync(ctx)
 	if err != nil {
-		var apiErr *zerrors.Error
-		if errors.As(err, &apiErr) {
+		if apiErr, ok := errors.AsType[*zerrors.Error](err); ok {
 			switch apiErr.Code {
 			case zerrors.ErrInvalidToken:
 				log.Printf("Authentication failed: %v", err)
