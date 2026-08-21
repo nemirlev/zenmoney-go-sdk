@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/nemirlev/zenmoney-go-sdk/v2/errors"
 	"github.com/nemirlev/zenmoney-go-sdk/v2/internal/client"
 )
 
@@ -15,6 +16,9 @@ type Client struct {
 func NewClient(token string, opts ...Option) (*Client, error) {
 	cfg := defaultConfig()
 	for _, opt := range opts {
+		if opt == nil {
+			return nil, errors.New(errors.ErrInvalidRequest, "nil client option", nil)
+		}
 		opt(cfg)
 	}
 

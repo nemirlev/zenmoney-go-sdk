@@ -29,6 +29,18 @@ func NewClient(token string, baseURL string, httpClient *http.Client, timeout ti
 	if token == "" {
 		return nil, errors.New(errors.ErrInvalidToken, "token is not provided", nil)
 	}
+	if httpClient == nil {
+		return nil, errors.New(errors.ErrInvalidRequest, "HTTP client is nil", nil)
+	}
+	if timeout < 0 {
+		return nil, errors.New(errors.ErrInvalidRequest, "timeout must not be negative", nil)
+	}
+	if retryAttempts < 0 {
+		return nil, errors.New(errors.ErrInvalidRequest, "retry attempts must not be negative", nil)
+	}
+	if retryWaitTime < 0 {
+		return nil, errors.New(errors.ErrInvalidRequest, "retry wait time must not be negative", nil)
+	}
 
 	return &Client{
 		baseURL:       baseURL,
@@ -42,60 +54,119 @@ func NewClient(token string, baseURL string, httpClient *http.Client, timeout ti
 
 // sendRequest sends an HTTP request to the specified endpoint with the given method and body
 // It handles retries, timeouts, and response processing
-func (c *Client) sendRequest(ctx context.Context, endpoint string, method string, body interface{}) ([]byte, error) {
+func (c *Client) sendRequest(ctx context.Context, endpoint string, method string, body any) ([]byte, error) {
+	if ctx == nil {
+		return nil, errors.New(errors.ErrInvalidRequest, "context is nil", nil)
+	}
+
 	jsonBody, err := json.Marshal(body)
 	if err != nil {
 		return nil, errors.New(errors.ErrInvalidRequest, "failed to marshal request body", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, method, c.baseURL+endpoint, bytes.NewBuffer(jsonBody))
-	if err != nil {
-		return nil, errors.New(errors.ErrInvalidRequest, "failed to create request", err)
+	requestCtx := ctx
+	cancel := func() {}
+	if c.timeout > 0 {
+		requestCtx, cancel = context.WithTimeout(ctx, c.timeout)
 	}
-
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", "Bearer "+c.token)
-
-	var resp *http.Response
-	var lastErr error
+	defer cancel()
 
 	for attempt := 0; attempt <= c.retryAttempts; attempt++ {
-		resp, err = c.httpClient.Do(req)
-		if err == nil {
-			break
+		req, err := http.NewRequestWithContext(
+			requestCtx,
+			method,
+			c.baseURL+endpoint,
+			bytes.NewReader(jsonBody),
+		)
+		if err != nil {
+			return nil, errors.New(errors.ErrInvalidRequest, "failed to create request", err)
 		}
-		lastErr = err
-		time.Sleep(c.retryWaitTime)
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+c.token)
+
+		resp, requestErr := c.httpClient.Do(req)
+		if requestErr == nil {
+			return readResponse(resp)
+		}
+		closeResponse(resp)
+
+		if requestCtx.Err() != nil {
+			return nil, errors.New(errors.ErrNetworkError, "request context ended", requestCtx.Err())
+		}
+		if attempt == c.retryAttempts {
+			return nil, errors.New(errors.ErrNetworkError, "failed to send request after retries", requestErr)
+		}
+
+		if err := waitForRetry(requestCtx, c.retryWaitTime); err != nil {
+			return nil, errors.New(errors.ErrNetworkError, "retry interrupted", err)
+		}
 	}
 
-	if lastErr != nil {
-		return nil, errors.New(errors.ErrNetworkError, "failed to send request after retries", lastErr)
+	panic("unreachable")
+}
+
+func waitForRetry(ctx context.Context, waitTime time.Duration) error {
+	if waitTime == 0 {
+		return ctx.Err()
 	}
 
+	timer := time.NewTimer(waitTime)
+	defer timer.Stop()
+
+	select {
+	case <-timer.C:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
+func readResponse(resp *http.Response) ([]byte, error) {
 	if resp == nil {
 		return nil, errors.New(errors.ErrNetworkError, "got nil response", nil)
 	}
-
-	defer func() {
-		if cerr := resp.Body.Close(); cerr != nil {
-			if err == nil {
-				err = errors.New(errors.ErrNetworkError, "failed to close response body", cerr)
-			}
-			fmt.Printf("failed to close response body: %v\n", cerr)
-		}
-	}()
-
-	resBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, errors.New(errors.ErrNetworkError, "failed to read response body", err)
+	if resp.Body == nil {
+		return nil, errors.New(errors.ErrNetworkError, "got response with nil body", nil)
 	}
 
-	if resp.StatusCode >= 400 {
-		return nil, errors.New(errors.ErrServerError,
-			fmt.Sprintf("server returned error status: %d", resp.StatusCode), nil)
+	resBody, readErr := io.ReadAll(resp.Body)
+	closeErr := resp.Body.Close()
+	if readErr != nil {
+		return nil, errors.New(errors.ErrNetworkError, "failed to read response body", readErr)
+	}
+	if closeErr != nil {
+		return nil, errors.New(errors.ErrNetworkError, "failed to close response body", closeErr)
+	}
+
+	if resp.StatusCode >= http.StatusBadRequest {
+		return nil, &errors.Error{
+			Code:       errorCodeForStatus(resp.StatusCode),
+			Message:    fmt.Sprintf("server returned error status: %d", resp.StatusCode),
+			StatusCode: resp.StatusCode,
+		}
 	}
 
 	return resBody, nil
+}
+
+func closeResponse(resp *http.Response) {
+	if resp != nil && resp.Body != nil {
+		_ = resp.Body.Close()
+	}
+}
+
+func errorCodeForStatus(statusCode int) errors.ErrorCode {
+	switch statusCode {
+	case http.StatusUnauthorized, http.StatusForbidden:
+		return errors.ErrInvalidToken
+	case http.StatusTooManyRequests:
+		return errors.ErrRateLimit
+	default:
+		if statusCode >= http.StatusInternalServerError {
+			return errors.ErrServerError
+		}
+		return errors.ErrInvalidRequest
+	}
 }
 
 // Sync sends a synchronization request to ZenMoney API with the provided parameters

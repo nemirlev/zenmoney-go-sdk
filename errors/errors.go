@@ -11,6 +11,7 @@ const (
 	ErrInvalidRequest ErrorCode = "INVALID_REQUEST"
 	ErrServerError    ErrorCode = "SERVER_ERROR"
 	ErrNetworkError   ErrorCode = "NETWORK_ERROR"
+	ErrRateLimit      ErrorCode = "RATE_LIMIT"
 )
 
 // Error describes an error returned by the SDK.
@@ -18,6 +19,9 @@ type Error struct {
 	Code    ErrorCode
 	Message string
 	Err     error
+
+	// StatusCode is the HTTP response status. It is zero for non-HTTP errors.
+	StatusCode int
 }
 
 func (e *Error) Error() string {

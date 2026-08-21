@@ -3,8 +3,11 @@ package client
 import (
 	"context"
 	"encoding/json"
+	stdErrors "errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -12,6 +15,12 @@ import (
 	"github.com/nemirlev/zenmoney-go-sdk/v2/models"
 	"github.com/stretchr/testify/require"
 )
+
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f(req)
+}
 
 func setupTestServer(t *testing.T, handler http.HandlerFunc) (*httptest.Server, *Client) {
 	server := httptest.NewServer(handler)
@@ -55,6 +64,61 @@ func TestNewClient(t *testing.T) {
 		require.Error(t, err)
 		require.Nil(t, client)
 		require.Equal(t, errors.ErrInvalidToken, err.(*errors.Error).Code)
+	})
+
+	t.Run("validates transport settings", func(t *testing.T) {
+		tests := []struct {
+			name          string
+			httpClient    *http.Client
+			timeout       time.Duration
+			retryAttempts int
+			retryWaitTime time.Duration
+		}{
+			{
+				name:          "nil HTTP client",
+				timeout:       time.Second,
+				retryAttempts: 1,
+				retryWaitTime: time.Second,
+			},
+			{
+				name:          "negative timeout",
+				httpClient:    &http.Client{},
+				timeout:       -time.Second,
+				retryAttempts: 1,
+				retryWaitTime: time.Second,
+			},
+			{
+				name:          "negative retry attempts",
+				httpClient:    &http.Client{},
+				timeout:       time.Second,
+				retryAttempts: -1,
+				retryWaitTime: time.Second,
+			},
+			{
+				name:          "negative retry wait",
+				httpClient:    &http.Client{},
+				timeout:       time.Second,
+				retryAttempts: 1,
+				retryWaitTime: -time.Second,
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				client, err := NewClient(
+					"test-token",
+					"https://api.test.com/",
+					tt.httpClient,
+					tt.timeout,
+					tt.retryAttempts,
+					tt.retryWaitTime,
+				)
+
+				require.Nil(t, client)
+				require.Error(t, err)
+				require.Equal(t, errors.ErrInvalidRequest, err.(*errors.Error).Code)
+			})
+		}
 	})
 }
 
@@ -102,10 +166,15 @@ func TestSync(t *testing.T) {
 	})
 
 	t.Run("handles network error", func(t *testing.T) {
+		httpClient := &http.Client{
+			Transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
+				return nil, stdErrors.New("network unavailable")
+			}),
+		}
 		client, err := NewClient(
 			"test-token",
-			"https://invalid.url/",
-			&http.Client{},
+			"https://api.test.com/",
+			httpClient,
 			time.Second,
 			0,
 			time.Second,
@@ -117,6 +186,160 @@ func TestSync(t *testing.T) {
 		apiErr, ok := err.(*errors.Error)
 		require.True(t, ok)
 		require.Equal(t, errors.ErrNetworkError, apiErr.Code)
+	})
+
+	t.Run("retries with a fresh request body", func(t *testing.T) {
+		var requestBodies []string
+		httpClient := &http.Client{
+			Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+				body, err := io.ReadAll(req.Body)
+				require.NoError(t, err)
+				requestBodies = append(requestBodies, string(body))
+
+				if len(requestBodies) == 1 {
+					return nil, stdErrors.New("temporary network error")
+				}
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Body: io.NopCloser(strings.NewReader(
+						`{"serverTimestamp":1642300800}`,
+					)),
+					Header: make(http.Header),
+				}, nil
+			}),
+		}
+		client, err := NewClient(
+			"test-token",
+			"https://api.test.com/",
+			httpClient,
+			time.Second,
+			1,
+			0,
+		)
+		require.NoError(t, err)
+
+		resp, err := client.Sync(context.Background(), models.Request{
+			CurrentClientTimestamp: 1642300700,
+			ServerTimestamp:        1642300600,
+		})
+
+		require.NoError(t, err)
+		require.Equal(t, 1642300800, resp.ServerTimestamp)
+		require.Len(t, requestBodies, 2)
+		require.NotEmpty(t, requestBodies[0])
+		require.Equal(t, requestBodies[0], requestBodies[1])
+	})
+
+	t.Run("interrupts retry wait when context is canceled", func(t *testing.T) {
+		httpClient := &http.Client{
+			Transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
+				return nil, stdErrors.New("temporary network error")
+			}),
+		}
+		client, err := NewClient(
+			"test-token",
+			"https://api.test.com/",
+			httpClient,
+			5*time.Second,
+			3,
+			5*time.Second,
+		)
+		require.NoError(t, err)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		timer := time.AfterFunc(20*time.Millisecond, cancel)
+		defer timer.Stop()
+		started := time.Now()
+
+		_, err = client.Sync(ctx, models.Request{})
+
+		require.ErrorIs(t, err, context.Canceled)
+		require.Less(t, time.Since(started), 500*time.Millisecond)
+	})
+
+	t.Run("applies configured timeout to the whole operation", func(t *testing.T) {
+		httpClient := &http.Client{
+			Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+				<-req.Context().Done()
+				return nil, req.Context().Err()
+			}),
+		}
+		client, err := NewClient(
+			"test-token",
+			"https://api.test.com/",
+			httpClient,
+			20*time.Millisecond,
+			3,
+			time.Second,
+		)
+		require.NoError(t, err)
+		started := time.Now()
+
+		_, err = client.Sync(context.Background(), models.Request{})
+
+		require.ErrorIs(t, err, context.DeadlineExceeded)
+		require.Less(t, time.Since(started), 500*time.Millisecond)
+	})
+
+	t.Run("classifies HTTP status errors", func(t *testing.T) {
+		tests := []struct {
+			statusCode int
+			errorCode  errors.ErrorCode
+		}{
+			{statusCode: http.StatusBadRequest, errorCode: errors.ErrInvalidRequest},
+			{statusCode: http.StatusUnauthorized, errorCode: errors.ErrInvalidToken},
+			{statusCode: http.StatusForbidden, errorCode: errors.ErrInvalidToken},
+			{statusCode: http.StatusTooManyRequests, errorCode: errors.ErrRateLimit},
+			{statusCode: http.StatusInternalServerError, errorCode: errors.ErrServerError},
+		}
+
+		for _, tt := range tests {
+			t.Run(http.StatusText(tt.statusCode), func(t *testing.T) {
+				httpClient := &http.Client{
+					Transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
+						return &http.Response{
+							StatusCode: tt.statusCode,
+							Body:       io.NopCloser(strings.NewReader(`{}`)),
+							Header:     make(http.Header),
+						}, nil
+					}),
+				}
+				client, err := NewClient(
+					"test-token",
+					"https://api.test.com/",
+					httpClient,
+					time.Second,
+					0,
+					0,
+				)
+				require.NoError(t, err)
+
+				_, err = client.Sync(context.Background(), models.Request{})
+
+				var apiErr *errors.Error
+				require.ErrorAs(t, err, &apiErr)
+				require.Equal(t, tt.errorCode, apiErr.Code)
+				require.Equal(t, tt.statusCode, apiErr.StatusCode)
+			})
+		}
+	})
+
+	t.Run("rejects nil context", func(t *testing.T) {
+		client, err := NewClient(
+			"test-token",
+			"https://api.test.com/",
+			&http.Client{},
+			time.Second,
+			0,
+			0,
+		)
+		require.NoError(t, err)
+
+		_, err = client.Sync(nil, models.Request{}) //nolint:staticcheck // Verify defensive validation.
+
+		var apiErr *errors.Error
+		require.ErrorAs(t, err, &apiErr)
+		require.Equal(t, errors.ErrInvalidRequest, apiErr.Code)
 	})
 
 	t.Run("handles server error", func(t *testing.T) {
@@ -188,7 +411,7 @@ func TestSuggest(t *testing.T) {
 		require.Error(t, err)
 		apiErr, ok := err.(*errors.Error)
 		require.True(t, ok)
-		require.Equal(t, errors.ErrServerError, apiErr.Code)
+		require.Equal(t, errors.ErrInvalidRequest, apiErr.Code)
 	})
 }
 

@@ -10,6 +10,7 @@ const (
 	ErrInvalidRequest = sdkerrors.ErrInvalidRequest
 	ErrServerError    = sdkerrors.ErrServerError
 	ErrNetworkError   = sdkerrors.ErrNetworkError
+	ErrRateLimit      = sdkerrors.ErrRateLimit
 )
 
 // Error describes an error returned by the SDK.
