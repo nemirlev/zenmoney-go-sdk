@@ -5,6 +5,25 @@
 - Update Go version and dependencies
 - Update Go version on github actions
 - Update CI workflow actions and matrix usage
+## [2.0.6](https://github.com/nemirlev/zenmoney-go-sdk/compare/v2.0.5...v2.0.6) (2026-08-21)
+
+
+### 🐛 Bug Fixes
+
+* **ci:** keep CodeQL compatible with Go toolchain ([4df1563](https://github.com/nemirlev/zenmoney-go-sdk/commit/4df1563e4d1b2728fe647b816ae090a58fc4e739))
+* **ci:** migrate releases to release-please ([46ca8c0](https://github.com/nemirlev/zenmoney-go-sdk/commit/46ca8c03848ab7b831270b713e0b1a1c10ef197d))
+
+
+### 👷 Continuous Integration
+
+* always use latest Go patch release ([648fc54](https://github.com/nemirlev/zenmoney-go-sdk/commit/648fc54c66159b6090a637c8b190036615a073f1))
+
+
+### ⚙️ Miscellaneous Tasks
+
+* update Go dependencies ([93e1110](https://github.com/nemirlev/zenmoney-go-sdk/commit/93e1110ce397ce2b3b65789a273f0955e6646a6b))
+* update Go to 1.27 ([bf1fdb3](https://github.com/nemirlev/zenmoney-go-sdk/commit/bf1fdb3cccfeef2c6b046e6b2867e5995b3fa590))
+
 ## [2.0.4] - 2025-01-25
 
 ### 🐛 Bug Fixes
