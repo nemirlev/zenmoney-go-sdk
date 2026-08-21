@@ -52,3 +52,39 @@ func TestForceSyncEntitiesSincePreservesCursor(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 1718454660, response.ServerTimestamp)
 }
+
+func TestForceSyncEntitiesCompatibilityWrapper(t *testing.T) {
+	var requestBody models.Request
+	httpClient := &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			require.NoError(t, json.NewDecoder(req.Body).Decode(&requestBody))
+
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Body:       io.NopCloser(strings.NewReader(`{"serverTimestamp":1718454660}`)),
+				Header:     make(http.Header),
+			}, nil
+		}),
+	}
+	client, err := api.NewClient(
+		"test-token",
+		api.WithHTTPClient(httpClient),
+		api.WithRetryPolicy(0, 0),
+	)
+	require.NoError(t, err)
+	startedAt := time.Now()
+
+	_, err = client.ForceSyncEntities( //nolint:staticcheck // Verify the v2 compatibility wrapper.
+		context.Background(),
+		models.EntityTypeTransaction,
+	)
+
+	require.NoError(t, err)
+	require.Equal(t, []models.EntityType{models.EntityTypeTransaction}, requestBody.ForceFetch)
+	require.WithinDuration(
+		t,
+		startedAt,
+		time.Unix(int64(requestBody.ServerTimestamp), 0),
+		time.Second,
+	)
+}

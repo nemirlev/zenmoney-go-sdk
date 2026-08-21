@@ -570,7 +570,7 @@ func TestSyncSince(t *testing.T) {
 	})
 }
 
-func TestForceSyncEntities(t *testing.T) {
+func TestForceSyncEntitiesSince(t *testing.T) {
 	t.Run("preserves the previous server timestamp", func(t *testing.T) {
 		lastSync := time.Date(2024, 6, 15, 12, 30, 0, 0, time.UTC)
 		server, client := setupTestServer(t, func(w http.ResponseWriter, r *http.Request) {
@@ -634,7 +634,9 @@ func TestForceSyncEntities(t *testing.T) {
 		})
 		defer server.Close()
 
-		resp, err := client.ForceSyncEntities(context.Background(),
+		resp, err := client.ForceSyncEntitiesSince(
+			context.Background(),
+			time.Now(),
 			models.EntityTypeTransaction,
 			models.EntityTypeAccount,
 		)
@@ -661,7 +663,7 @@ func TestForceSyncEntities(t *testing.T) {
 		})
 		defer server.Close()
 
-		resp, err := client.ForceSyncEntities(context.Background())
+		resp, err := client.ForceSyncEntitiesSince(context.Background(), time.Now())
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		require.Greater(t, resp.ServerTimestamp, 0)
@@ -676,7 +678,7 @@ func TestForceSyncEntities(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 		defer cancel()
 
-		_, err := client.ForceSyncEntities(ctx, models.EntityTypeTransaction)
+		_, err := client.ForceSyncEntitiesSince(ctx, time.Now(), models.EntityTypeTransaction)
 		require.Error(t, err)
 	})
 }

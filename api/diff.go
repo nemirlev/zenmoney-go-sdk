@@ -33,7 +33,7 @@ func (c *Client) SyncSince(ctx context.Context, lastSync time.Time) (models.Resp
 //
 // Deprecated: Use ForceSyncEntitiesSince to include changes since a known server timestamp.
 func (c *Client) ForceSyncEntities(ctx context.Context, entityTypes ...models.EntityType) (models.Response, error) {
-	return c.internal.ForceSyncEntities(ctx, entityTypes...)
+	return c.internal.ForceSyncEntitiesSince(ctx, time.Now(), entityTypes...)
 }
 
 // ForceSyncEntitiesSince requests all specified entities and regular changes
