@@ -24,6 +24,7 @@ jobs:
         uses: actions/setup-go@v7.0.0
         with:
           go-version-file: go.mod
+          check-latest: true
           cache-dependency-path: go.sum
 
       - name: Lint by go vet
@@ -50,6 +51,7 @@ jobs:
         uses: actions/setup-go@v7.0.0
         with:
           go-version-file: go.mod
+          check-latest: true
           cache-dependency-path: go.sum
 
       - name: Run unit tests
