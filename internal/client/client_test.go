@@ -571,6 +571,36 @@ func TestSyncSince(t *testing.T) {
 }
 
 func TestForceSyncEntities(t *testing.T) {
+	t.Run("preserves the previous server timestamp", func(t *testing.T) {
+		lastSync := time.Date(2024, 6, 15, 12, 30, 0, 0, time.UTC)
+		server, client := setupTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+			var req models.Request
+			err := json.NewDecoder(r.Body).Decode(&req)
+			require.NoError(t, err)
+			require.Equal(t, int(lastSync.Unix()), req.ServerTimestamp)
+			require.Equal(t, []models.EntityType{
+				models.EntityTypeTransaction,
+				models.EntityTypeAccount,
+			}, req.ForceFetch)
+
+			err = json.NewEncoder(w).Encode(models.Response{
+				ServerTimestamp: int(lastSync.Add(time.Minute).Unix()),
+			})
+			require.NoError(t, err)
+		})
+		defer server.Close()
+
+		resp, err := client.ForceSyncEntitiesSince(
+			context.Background(),
+			lastSync,
+			models.EntityTypeTransaction,
+			models.EntityTypeAccount,
+		)
+
+		require.NoError(t, err)
+		require.Equal(t, int(lastSync.Add(time.Minute).Unix()), resp.ServerTimestamp)
+	})
+
 	t.Run("successful force sync with multiple entities", func(t *testing.T) {
 		server, client := setupTestServer(t, func(w http.ResponseWriter, r *http.Request) {
 			require.Equal(t, http.MethodPost, r.Method)

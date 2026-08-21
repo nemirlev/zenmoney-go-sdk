@@ -19,7 +19,11 @@ func main() {
 	ctx := context.Background()
 
 	// Sync merchants
-	resp, err := client.ForceSyncEntities(ctx, models.EntityTypeMerchant)
+	resp, err := client.ForceSyncEntitiesSince(
+		ctx,
+		time.Now().Add(-24*time.Hour),
+		models.EntityTypeMerchant,
+	)
 	if err != nil {
 		log.Fatalf("Failed to sync merchants: %v", err)
 	}

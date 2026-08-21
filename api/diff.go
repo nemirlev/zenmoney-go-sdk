@@ -29,7 +29,15 @@ func (c *Client) SyncSince(ctx context.Context, lastSync time.Time) (models.Resp
 	return c.internal.SyncSince(ctx, lastSync)
 }
 
-// ForceSyncEntities requests a full update of the specified entities along with regular changes
+// ForceSyncEntities requests a full update of the specified entities without an incremental cursor.
+//
+// Deprecated: Use ForceSyncEntitiesSince to include changes since a known server timestamp.
 func (c *Client) ForceSyncEntities(ctx context.Context, entityTypes ...models.EntityType) (models.Response, error) {
 	return c.internal.ForceSyncEntities(ctx, entityTypes...)
+}
+
+// ForceSyncEntitiesSince requests all specified entities and regular changes
+// since the server timestamp returned by the previous synchronization.
+func (c *Client) ForceSyncEntitiesSince(ctx context.Context, lastSync time.Time, entityTypes ...models.EntityType) (models.Response, error) {
+	return c.internal.ForceSyncEntitiesSince(ctx, lastSync, entityTypes...)
 }

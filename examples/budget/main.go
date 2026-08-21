@@ -19,7 +19,11 @@ func main() {
 	ctx := context.Background()
 
 	// Get current month's budgets
-	resp, err := client.ForceSyncEntities(ctx, models.EntityTypeBudget)
+	resp, err := client.ForceSyncEntitiesSince(
+		ctx,
+		time.Now().Add(-24*time.Hour),
+		models.EntityTypeBudget,
+	)
 	if err != nil {
 		log.Fatalf("Failed to sync budgets: %v", err)
 	}

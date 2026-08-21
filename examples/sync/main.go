@@ -35,7 +35,9 @@ func main() {
 	log.Printf("Sync since completed successfully")
 
 	// Example 3: Force sync specific entities
-	forceSyncResp, err := client.ForceSyncEntities(ctx,
+	forceSyncResp, err := client.ForceSyncEntitiesSince(
+		ctx,
+		lastSync,
 		models.EntityTypeAccount,
 		models.EntityTypeTransaction,
 	)

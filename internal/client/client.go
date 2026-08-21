@@ -205,12 +205,17 @@ func (c *Client) SyncSince(ctx context.Context, lastSync time.Time) (models.Resp
 	return c.Sync(ctx, body)
 }
 
-// ForceSyncEntities requests a full update of the specified entities along with regular changes
-// entityTypes - list of entity types to be fully fetched
+// ForceSyncEntities requests a full update of the specified entities without an incremental cursor.
 func (c *Client) ForceSyncEntities(ctx context.Context, entityTypes ...models.EntityType) (models.Response, error) {
+	return c.ForceSyncEntitiesSince(ctx, time.Now(), entityTypes...)
+}
+
+// ForceSyncEntitiesSince requests all specified entities and regular changes
+// since the server timestamp returned by the previous synchronization.
+func (c *Client) ForceSyncEntitiesSince(ctx context.Context, lastSync time.Time, entityTypes ...models.EntityType) (models.Response, error) {
 	body := models.Request{
 		CurrentClientTimestamp: int(time.Now().Unix()),
-		ServerTimestamp:        int(time.Now().Unix()),
+		ServerTimestamp:        int(lastSync.Unix()),
 		ForceFetch:             entityTypes,
 	}
 
