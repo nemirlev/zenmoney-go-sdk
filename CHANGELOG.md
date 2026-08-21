@@ -2,6 +2,11 @@
 
 ### ⚙️ Miscellaneous Tasks
 
+- Update Go dependencies
+## [2.0.5] - 2026-03-07
+
+### ⚙️ Miscellaneous Tasks
+
 - Update Go version and dependencies
 - Update Go version on github actions
 - Update CI workflow actions and matrix usage
