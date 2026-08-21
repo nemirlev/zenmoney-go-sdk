@@ -1,0 +1,4 @@
+# A release PR changes both files, so publishing requires the repository owner's review.
+/.github/CODEOWNERS @nemirlev
+/CHANGELOG.md @nemirlev
+/.release-please-manifest.json @nemirlev

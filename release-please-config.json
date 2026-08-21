@@ -1,0 +1,56 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "release-type": "go",
+  "include-component-in-tag": false,
+  "include-v-in-tag": true,
+  "separate-pull-requests": true,
+  "changelog-sections": [
+    {
+      "type": "feat",
+      "section": "🚀 Features"
+    },
+    {
+      "type": "fix",
+      "section": "🐛 Bug Fixes"
+    },
+    {
+      "type": "perf",
+      "section": "⚡ Performance"
+    },
+    {
+      "type": "refactor",
+      "section": "🚜 Refactor"
+    },
+    {
+      "type": "test",
+      "section": "🧪 Testing"
+    },
+    {
+      "type": "docs",
+      "section": "📚 Documentation"
+    },
+    {
+      "type": "build",
+      "section": "🛠️ Build System"
+    },
+    {
+      "type": "ci",
+      "section": "👷 Continuous Integration"
+    },
+    {
+      "type": "chore",
+      "section": "⚙️ Miscellaneous Tasks"
+    },
+    {
+      "type": "revert",
+      "section": "⏪ Reverts"
+    }
+  ],
+  "packages": {
+    ".": {
+      "component": "zenmoney-go-sdk",
+      "package-name": "zenmoney-go-sdk",
+      "changelog-path": "CHANGELOG.md"
+    }
+  }
+}
