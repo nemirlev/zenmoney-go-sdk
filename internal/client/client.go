@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/nemirlev/zenmoney-go-sdk/v2/internal/errors"
+	"github.com/nemirlev/zenmoney-go-sdk/v2/errors"
 	"github.com/nemirlev/zenmoney-go-sdk/v2/models"
 )
 
@@ -27,7 +27,7 @@ type Client struct {
 // NewClient creates a new instance of the internal API client
 func NewClient(token string, baseURL string, httpClient *http.Client, timeout time.Duration, retryAttempts int, retryWaitTime time.Duration) (*Client, error) {
 	if token == "" {
-		return nil, errors.NewError(errors.ErrInvalidToken, "token is not provided", nil)
+		return nil, errors.New(errors.ErrInvalidToken, "token is not provided", nil)
 	}
 
 	return &Client{
@@ -45,12 +45,12 @@ func NewClient(token string, baseURL string, httpClient *http.Client, timeout ti
 func (c *Client) sendRequest(ctx context.Context, endpoint string, method string, body interface{}) ([]byte, error) {
 	jsonBody, err := json.Marshal(body)
 	if err != nil {
-		return nil, errors.NewError(errors.ErrInvalidRequest, "failed to marshal request body", err)
+		return nil, errors.New(errors.ErrInvalidRequest, "failed to marshal request body", err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, method, c.baseURL+endpoint, bytes.NewBuffer(jsonBody))
 	if err != nil {
-		return nil, errors.NewError(errors.ErrInvalidRequest, "failed to create request", err)
+		return nil, errors.New(errors.ErrInvalidRequest, "failed to create request", err)
 	}
 
 	req.Header.Add("Content-Type", "application/json")
@@ -69,17 +69,17 @@ func (c *Client) sendRequest(ctx context.Context, endpoint string, method string
 	}
 
 	if lastErr != nil {
-		return nil, errors.NewError(errors.ErrNetworkError, "failed to send request after retries", lastErr)
+		return nil, errors.New(errors.ErrNetworkError, "failed to send request after retries", lastErr)
 	}
 
 	if resp == nil {
-		return nil, errors.NewError(errors.ErrNetworkError, "got nil response", nil)
+		return nil, errors.New(errors.ErrNetworkError, "got nil response", nil)
 	}
 
 	defer func() {
 		if cerr := resp.Body.Close(); cerr != nil {
 			if err == nil {
-				err = errors.NewError(errors.ErrNetworkError, "failed to close response body", cerr)
+				err = errors.New(errors.ErrNetworkError, "failed to close response body", cerr)
 			}
 			fmt.Printf("failed to close response body: %v\n", cerr)
 		}
@@ -87,11 +87,11 @@ func (c *Client) sendRequest(ctx context.Context, endpoint string, method string
 
 	resBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, errors.NewError(errors.ErrNetworkError, "failed to read response body", err)
+		return nil, errors.New(errors.ErrNetworkError, "failed to read response body", err)
 	}
 
 	if resp.StatusCode >= 400 {
-		return nil, errors.NewError(errors.ErrServerError,
+		return nil, errors.New(errors.ErrServerError,
 			fmt.Sprintf("server returned error status: %d", resp.StatusCode), nil)
 	}
 
@@ -107,7 +107,7 @@ func (c *Client) Sync(ctx context.Context, body models.Request) (models.Response
 
 	var result models.Response
 	if err := json.Unmarshal(resBody, &result); err != nil {
-		return models.Response{}, errors.NewError(errors.ErrInvalidRequest,
+		return models.Response{}, errors.New(errors.ErrInvalidRequest,
 			"failed to unmarshal response", err)
 	}
 
@@ -165,7 +165,7 @@ func (c *Client) Suggest(ctx context.Context, transaction models.Transaction) (m
 
 	var result models.Transaction
 	if err := json.Unmarshal(resBody, &result); err != nil {
-		return models.Transaction{}, errors.NewError(errors.ErrInvalidRequest,
+		return models.Transaction{}, errors.New(errors.ErrInvalidRequest,
 			"failed to unmarshal response", err)
 	}
 
@@ -181,7 +181,7 @@ func (c *Client) SuggestBatch(ctx context.Context, transactions []models.Transac
 
 	var result []models.Transaction
 	if err := json.Unmarshal(resBody, &result); err != nil {
-		return nil, errors.NewError(errors.ErrInvalidRequest,
+		return nil, errors.New(errors.ErrInvalidRequest,
 			"failed to unmarshal response", err)
 	}
 

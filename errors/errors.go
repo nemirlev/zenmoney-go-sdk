@@ -1,7 +1,9 @@
+// Package errors defines errors returned by the ZenMoney SDK.
 package errors
 
 import "fmt"
 
+// ErrorCode identifies a category of SDK error.
 type ErrorCode string
 
 const (
@@ -11,6 +13,7 @@ const (
 	ErrNetworkError   ErrorCode = "NETWORK_ERROR"
 )
 
+// Error describes an error returned by the SDK.
 type Error struct {
 	Code    ErrorCode
 	Message string
@@ -24,11 +27,13 @@ func (e *Error) Error() string {
 	return fmt.Sprintf("%s: %s", e.Code, e.Message)
 }
 
+// Unwrap returns the underlying error, if any.
 func (e *Error) Unwrap() error {
 	return e.Err
 }
 
-func NewError(code ErrorCode, message string, err error) *Error {
+// New creates an SDK error with the provided category and cause.
+func New(code ErrorCode, message string, err error) *Error {
 	return &Error{
 		Code:    code,
 		Message: message,

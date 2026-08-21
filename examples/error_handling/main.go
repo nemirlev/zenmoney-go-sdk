@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/nemirlev/zenmoney-go-sdk/v2/api"
-	zerrors "github.com/nemirlev/zenmoney-go-sdk/v2/internal/errors"
 )
 
 func main() {
@@ -21,18 +20,18 @@ func main() {
 	// Example of handling different error types
 	_, err = client.FullSync(ctx)
 	if err != nil {
-		if apiErr, ok := errors.AsType[*zerrors.Error](err); ok {
+		if apiErr, ok := errors.AsType[*api.Error](err); ok {
 			switch apiErr.Code {
-			case zerrors.ErrInvalidToken:
+			case api.ErrInvalidToken:
 				log.Printf("Authentication failed: %v", err)
 				// Handle token refresh
 
-			case zerrors.ErrServerError:
+			case api.ErrServerError:
 				log.Printf("Server error: %v", err)
 				// Implement retry with backoff
 				retryWithBackoff(client, ctx)
 
-			case zerrors.ErrNetworkError:
+			case api.ErrNetworkError:
 				log.Printf("Network error: %v", err)
 				// Check connectivity
 
