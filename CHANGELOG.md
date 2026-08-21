@@ -5,6 +5,32 @@
 - Update Go version and dependencies
 - Update Go version on github actions
 - Update CI workflow actions and matrix usage
+## [2.0.7](https://github.com/nemirlev/zenmoney-go-sdk/compare/v2.0.6...v2.0.7) (2026-08-21)
+
+
+### 🐛 Bug Fixes
+
+* align models with current diff schema ([99b2a5e](https://github.com/nemirlev/zenmoney-go-sdk/commit/99b2a5e998afe32433dbb8ef66571ff9305dd3fe))
+* **ci:** restore stable Go 1.27 toolchain ([eafc6a8](https://github.com/nemirlev/zenmoney-go-sdk/commit/eafc6a8daf3a0d16e0d9c1a157746f554806cc59))
+* expose SDK errors publicly ([c27be4d](https://github.com/nemirlev/zenmoney-go-sdk/commit/c27be4d0dcfecc062728644c57adc15ae18fc7cb))
+* make HTTP retries safe and honor timeouts ([93f619e](https://github.com/nemirlev/zenmoney-go-sdk/commit/93f619e931f852c1426b8d1a1ef9117de9fa8401))
+* preserve sync cursor when forcing entities ([19b6712](https://github.com/nemirlev/zenmoney-go-sdk/commit/19b6712d1b9f3eb332083a7ca5a4e2f03d2f4565))
+
+
+### 🚜 Refactor
+
+* keep force sync compatibility at API boundary ([d67863b](https://github.com/nemirlev/zenmoney-go-sdk/commit/d67863b0dff5cb30f61397b7f36ecbe2b7b235e4))
+
+
+### 📚 Documentation
+
+* update examples for corrected client behavior ([faa68fa](https://github.com/nemirlev/zenmoney-go-sdk/commit/faa68fa0c9ee2d81e69190d0359f923f5c682ea3))
+
+
+### 👷 Continuous Integration
+
+* test Go 1.26 and 1.27 release candidate ([ef06512](https://github.com/nemirlev/zenmoney-go-sdk/commit/ef06512cd296938c29fdcca63db261c7e6f734ec))
+
 ## [2.0.6](https://github.com/nemirlev/zenmoney-go-sdk/compare/v2.0.5...v2.0.6) (2026-08-21)
 
 
