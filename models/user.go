@@ -64,7 +64,7 @@ type Account struct {
 	Percent *float64 `json:"percent"`
 
 	// Unix timestamp of the last change.
-	Changed int `json:"changed"`
+	Changed int64 `json:"changed"`
 
 	// Array of bank account numbers. Usually, the last 4 digits of the account number and the last 4 digits of the bank cards linked to the account.
 	SyncID []string `json:"syncID"`
@@ -94,7 +94,7 @@ type Tag struct {
 	User int `json:"user"` // User.id
 
 	// Unix timestamp of the last change.
-	Changed int `json:"changed"` // Unix timestamp
+	Changed int64 `json:"changed"` // Unix timestamp
 
 	// ID of the tag icon.
 	Icon *string `json:"icon"` // Id иконки категории
@@ -107,6 +107,9 @@ type Tag struct {
 
 	// Indicates if the expenses for this tag are mandatory. If null, they are also considered mandatory.
 	Required *bool `json:"required"` // Являются ли расходы по данной категории обязательными
+
+	// Indicates if the tag is archived.
+	Archive bool `json:"archive"`
 
 	// Color of the tag icon as a number. Calculated by alpha, red, green, blue (0 <= 255).
 	Color *int64 `json:"color"` // Цвет иконки категории
@@ -137,7 +140,7 @@ type Budget struct {
 	User int `json:"user"` // User.id
 
 	// Unix timestamp of the last change.
-	Changed int `json:"changed"` // Unix timestamp
+	Changed int64 `json:"changed"` // Unix timestamp
 
 	// Start date of the budget month.
 	Date string `json:"date"` // 'yyyy-MM-dd'
@@ -176,7 +179,10 @@ type Merchant struct {
 	Title string `json:"title"`
 
 	// Unix timestamp of the last change.
-	Changed int `json:"changed"` // Unix timestamp
+	Changed int64 `json:"changed"` // Unix timestamp
+
+	// Merchant category code. Null when it is not known.
+	MCC *int `json:"mcc"`
 }
 
 // Reminder - a reminder for a financial operation
@@ -199,7 +205,7 @@ type Reminder struct {
 	Outcome float64 `json:"outcome"`
 
 	// Unix timestamp of the last change.
-	Changed int `json:"changed"`
+	Changed int64 `json:"changed"`
 
 	// Instrument.ID for the income.
 	IncomeInstrument int `json:"incomeInstrument"`
@@ -235,7 +241,7 @@ type Reminder struct {
 	OutcomeAccount string `json:"outcomeAccount"`
 
 	// Comment for the reminder.
-	Comment string `json:"comment"`
+	Comment *string `json:"comment"`
 
 	// Payee.ID associated with the reminder.
 	Payee *string `json:"payee"`
@@ -262,7 +268,7 @@ type ReminderMarker struct {
 	Outcome float64 `json:"outcome"`
 
 	// Unix timestamp of the last change. In Unix timestamp format.
-	Changed int `json:"changed"`
+	Changed int64 `json:"changed"`
 
 	// Instrument.ID for the income.
 	IncomeInstrument int `json:"incomeInstrument"`
@@ -327,7 +333,7 @@ type Transaction struct {
 	Outcome float64 `json:"outcome"`
 
 	// Unix timestamp of the last change.
-	Changed int `json:"changed"`
+	Changed int64 `json:"changed"`
 
 	// Instrument.ID for the income.
 	IncomeInstrument int `json:"incomeInstrument"`
@@ -336,7 +342,7 @@ type Transaction struct {
 	OutcomeInstrument int `json:"outcomeInstrument"`
 
 	// Unix timestamp of the creation of the transaction.
-	Created int `json:"created"` // Unix timestamp
+	Created int64 `json:"created"` // Unix timestamp
 
 	// Original payee of the transaction.
 	OriginalPayee string `json:"originalPayee"`

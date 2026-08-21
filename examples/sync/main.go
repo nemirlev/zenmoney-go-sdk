@@ -26,7 +26,7 @@ func main() {
 	log.Printf("Full sync completed successfully")
 
 	// Example 2: Sync since timestamp
-	lastSync := time.Unix(int64(fullSyncResp.ServerTimestamp), 0)
+	lastSync := time.Unix(fullSyncResp.ServerTimestamp, 0)
 	syncResp, err := client.SyncSince(ctx, lastSync)
 	if err != nil {
 		log.Fatalf("Sync since failed: %v", err)

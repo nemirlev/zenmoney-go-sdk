@@ -188,7 +188,7 @@ func (c *Client) Sync(ctx context.Context, body models.Request) (models.Response
 // FullSync performs a full synchronization with ZenMoney API, retrieving all available data
 func (c *Client) FullSync(ctx context.Context) (models.Response, error) {
 	body := models.Request{
-		CurrentClientTimestamp: int(time.Now().Unix()),
+		CurrentClientTimestamp: time.Now().Unix(),
 		ServerTimestamp:        0,
 	}
 
@@ -198,8 +198,8 @@ func (c *Client) FullSync(ctx context.Context) (models.Response, error) {
 // SyncSince performs a synchronization with ZenMoney API from the specified timestamp
 func (c *Client) SyncSince(ctx context.Context, lastSync time.Time) (models.Response, error) {
 	body := models.Request{
-		CurrentClientTimestamp: int(time.Now().Unix()),
-		ServerTimestamp:        int(lastSync.Unix()),
+		CurrentClientTimestamp: time.Now().Unix(),
+		ServerTimestamp:        lastSync.Unix(),
 	}
 
 	return c.Sync(ctx, body)
@@ -209,8 +209,8 @@ func (c *Client) SyncSince(ctx context.Context, lastSync time.Time) (models.Resp
 // since the server timestamp returned by the previous synchronization.
 func (c *Client) ForceSyncEntitiesSince(ctx context.Context, lastSync time.Time, entityTypes ...models.EntityType) (models.Response, error) {
 	body := models.Request{
-		CurrentClientTimestamp: int(time.Now().Unix()),
-		ServerTimestamp:        int(lastSync.Unix()),
+		CurrentClientTimestamp: time.Now().Unix(),
+		ServerTimestamp:        lastSync.Unix(),
 		ForceFetch:             entityTypes,
 	}
 

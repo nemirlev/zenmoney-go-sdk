@@ -20,7 +20,7 @@ func TestForceSyncEntitiesSincePreservesCursor(t *testing.T) {
 		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
 			var body models.Request
 			require.NoError(t, json.NewDecoder(req.Body).Decode(&body))
-			require.Equal(t, int(lastSync.Unix()), body.ServerTimestamp)
+			require.Equal(t, lastSync.Unix(), body.ServerTimestamp)
 			require.Equal(t, []models.EntityType{
 				models.EntityTypeTransaction,
 				models.EntityTypeAccount,
@@ -50,7 +50,7 @@ func TestForceSyncEntitiesSincePreservesCursor(t *testing.T) {
 	)
 
 	require.NoError(t, err)
-	require.Equal(t, 1718454660, response.ServerTimestamp)
+	require.Equal(t, int64(1718454660), response.ServerTimestamp)
 }
 
 func TestForceSyncEntitiesCompatibilityWrapper(t *testing.T) {
@@ -84,7 +84,7 @@ func TestForceSyncEntitiesCompatibilityWrapper(t *testing.T) {
 	require.WithinDuration(
 		t,
 		startedAt,
-		time.Unix(int64(requestBody.ServerTimestamp), 0),
+		time.Unix(requestBody.ServerTimestamp, 0),
 		time.Second,
 	)
 }

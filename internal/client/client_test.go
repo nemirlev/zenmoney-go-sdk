@@ -133,8 +133,8 @@ func TestSync(t *testing.T) {
 
 			var reqBody models.Request
 			require.NoError(t, json.NewDecoder(r.Body).Decode(&reqBody))
-			require.Greater(t, reqBody.CurrentClientTimestamp, 0)
-			require.Equal(t, 1642300700, reqBody.ServerTimestamp)
+			require.Greater(t, reqBody.CurrentClientTimestamp, int64(0))
+			require.Equal(t, int64(1642300700), reqBody.ServerTimestamp)
 
 			response := models.Response{
 				ServerTimestamp: 1642300800,
@@ -155,12 +155,12 @@ func TestSync(t *testing.T) {
 		defer server.Close()
 
 		resp, err := client.Sync(context.Background(), models.Request{
-			CurrentClientTimestamp: int(time.Now().Unix()),
+			CurrentClientTimestamp: time.Now().Unix(),
 			ServerTimestamp:        1642300700,
 		})
 
 		require.NoError(t, err)
-		require.Equal(t, 1642300800, resp.ServerTimestamp)
+		require.Equal(t, int64(1642300800), resp.ServerTimestamp)
 		require.Len(t, resp.Instrument, 1)
 		require.Equal(t, "USD", resp.Instrument[0].ShortTitle)
 	})
@@ -224,7 +224,7 @@ func TestSync(t *testing.T) {
 		})
 
 		require.NoError(t, err)
-		require.Equal(t, 1642300800, resp.ServerTimestamp)
+		require.Equal(t, int64(1642300800), resp.ServerTimestamp)
 		require.Len(t, requestBodies, 2)
 		require.NotEmpty(t, requestBodies[0])
 		require.Equal(t, requestBodies[0], requestBodies[1])
@@ -483,18 +483,18 @@ func TestFullSync(t *testing.T) {
 			err := json.NewDecoder(r.Body).Decode(&req)
 			require.NoError(t, err)
 
-			require.Equal(t, 0, req.ServerTimestamp)
-			require.Greater(t, req.CurrentClientTimestamp, 0)
-			require.LessOrEqual(t, req.CurrentClientTimestamp, int(time.Now().Unix()))
+			require.Equal(t, int64(0), req.ServerTimestamp)
+			require.Greater(t, req.CurrentClientTimestamp, int64(0))
+			require.LessOrEqual(t, req.CurrentClientTimestamp, time.Now().Unix())
 
 			// Возвращаем тестовый ответ
 			resp := models.Response{
-				ServerTimestamp: int(time.Now().Unix()),
+				ServerTimestamp: time.Now().Unix(),
 				User: []models.User{
 					{
 						ID:      1,
 						Login:   "testuser",
-						Changed: int(time.Now().Unix()),
+						Changed: time.Now().Unix(),
 					},
 				},
 			}
@@ -506,7 +506,7 @@ func TestFullSync(t *testing.T) {
 		resp, err := client.FullSync(context.Background())
 		require.NoError(t, err)
 		require.NotNil(t, resp)
-		require.Greater(t, resp.ServerTimestamp, 0)
+		require.Greater(t, resp.ServerTimestamp, int64(0))
 		require.Len(t, resp.User, 1)
 		require.Equal(t, "testuser", resp.User[0].Login)
 	})
@@ -534,15 +534,15 @@ func TestSyncSince(t *testing.T) {
 			err := json.NewDecoder(r.Body).Decode(&req)
 			require.NoError(t, err)
 
-			require.Equal(t, int(lastSync.Unix()), req.ServerTimestamp)
-			require.Greater(t, req.CurrentClientTimestamp, int(lastSync.Unix()))
+			require.Equal(t, lastSync.Unix(), req.ServerTimestamp)
+			require.Greater(t, req.CurrentClientTimestamp, lastSync.Unix())
 
 			resp := models.Response{
-				ServerTimestamp: int(time.Now().Unix()),
+				ServerTimestamp: time.Now().Unix(),
 				Transaction: []models.Transaction{
 					{
 						ID:      "test-tx-1",
-						Changed: int(time.Now().Unix()),
+						Changed: time.Now().Unix(),
 					},
 				},
 			}
@@ -577,14 +577,14 @@ func TestForceSyncEntitiesSince(t *testing.T) {
 			var req models.Request
 			err := json.NewDecoder(r.Body).Decode(&req)
 			require.NoError(t, err)
-			require.Equal(t, int(lastSync.Unix()), req.ServerTimestamp)
+			require.Equal(t, lastSync.Unix(), req.ServerTimestamp)
 			require.Equal(t, []models.EntityType{
 				models.EntityTypeTransaction,
 				models.EntityTypeAccount,
 			}, req.ForceFetch)
 
 			err = json.NewEncoder(w).Encode(models.Response{
-				ServerTimestamp: int(lastSync.Add(time.Minute).Unix()),
+				ServerTimestamp: lastSync.Add(time.Minute).Unix(),
 			})
 			require.NoError(t, err)
 		})
@@ -598,7 +598,7 @@ func TestForceSyncEntitiesSince(t *testing.T) {
 		)
 
 		require.NoError(t, err)
-		require.Equal(t, int(lastSync.Add(time.Minute).Unix()), resp.ServerTimestamp)
+		require.Equal(t, lastSync.Add(time.Minute).Unix(), resp.ServerTimestamp)
 	})
 
 	t.Run("successful force sync with multiple entities", func(t *testing.T) {
@@ -615,17 +615,17 @@ func TestForceSyncEntitiesSince(t *testing.T) {
 			require.Len(t, req.ForceFetch, 2)
 
 			resp := models.Response{
-				ServerTimestamp: int(time.Now().Unix()),
+				ServerTimestamp: time.Now().Unix(),
 				Transaction: []models.Transaction{
 					{
 						ID:      "forced-tx-1",
-						Changed: int(time.Now().Unix()),
+						Changed: time.Now().Unix(),
 					},
 				},
 				Account: []models.Account{
 					{
 						ID:      "forced-acc-1",
-						Changed: int(time.Now().Unix()),
+						Changed: time.Now().Unix(),
 					},
 				},
 			}
@@ -656,7 +656,7 @@ func TestForceSyncEntitiesSince(t *testing.T) {
 			require.Empty(t, req.ForceFetch)
 
 			resp := models.Response{
-				ServerTimestamp: int(time.Now().Unix()),
+				ServerTimestamp: time.Now().Unix(),
 			}
 			err = json.NewEncoder(w).Encode(resp)
 			require.NoError(t, err)
@@ -666,7 +666,7 @@ func TestForceSyncEntitiesSince(t *testing.T) {
 		resp, err := client.ForceSyncEntitiesSince(context.Background(), time.Now())
 		require.NoError(t, err)
 		require.NotNil(t, resp)
-		require.Greater(t, resp.ServerTimestamp, 0)
+		require.Greater(t, resp.ServerTimestamp, int64(0))
 	})
 
 	t.Run("handles context cancellation", func(t *testing.T) {

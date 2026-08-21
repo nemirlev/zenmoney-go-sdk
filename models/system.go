@@ -22,7 +22,7 @@ type Instrument struct {
 	Rate float64 `json:"rate"`
 
 	// Unix timestamp of the last change.
-	Changed int `json:"changed"`
+	Changed int64 `json:"changed"`
 }
 
 // Company - a bank or other financial organization where accounts can exist.
@@ -31,13 +31,13 @@ type Company struct {
 	ID int `json:"id"`
 
 	// Unix timestamp of the last change.
-	Changed int `json:"changed"`
+	Changed int64 `json:"changed"`
 
 	// Title of the company.
 	Title string `json:"title"`
 
 	// Full title of the company.
-	FullTitle string `json:"fullTitle"`
+	FullTitle *string `json:"fullTitle"`
 
 	// Website of the company.
 	Www string `json:"www"`
@@ -73,13 +73,13 @@ type User struct {
 	Email string `json:"email"`
 
 	// Unix timestamp of the last change.
-	Changed int `json:"changed"`
+	Changed int64 `json:"changed"`
 
 	// Instrument ID. The primary currency used by the user. ID of the Instrument entity.
 	Currency int `json:"currency"`
 
 	// Unix timestamp until the user has paid.
-	PaidTill int `json:"paidTill"`
+	PaidTill int64 `json:"paidTill"`
 
 	// The day of the month when the user's financial month starts.
 	MonthStartDay int `json:"monthStartDay"`
@@ -97,7 +97,7 @@ type User struct {
 	Subscription string `json:"subscription"`
 
 	// Unix timestamp of the subscription renewal date. Null if not applicable.
-	SubscriptionRenewalDate *int `json:"subscriptionRenewalDate"`
+	SubscriptionRenewalDate *int64 `json:"subscriptionRenewalDate"`
 }
 
 // Country - a country entity with associated information.

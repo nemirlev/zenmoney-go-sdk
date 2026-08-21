@@ -33,6 +33,6 @@ func main() {
 		fmt.Printf("Merchant: %s\n", merchant.Title)
 		fmt.Printf("  ID: %s\n", merchant.ID)
 		fmt.Printf("  Last changed: %v\n",
-			time.Unix(int64(merchant.Changed), 0).Format(time.RFC3339))
+			time.Unix(merchant.Changed, 0).Format(time.RFC3339))
 	}
 }

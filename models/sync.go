@@ -19,7 +19,7 @@ package models
 type Deletion struct {
 	ID     string `json:"id"`     // Object.id
 	Object string `json:"object"` // Object.class
-	Stamp  int    `json:"stamp"`
+	Stamp  int64  `json:"stamp"`
 	User   int    `json:"user"`
 }
 
@@ -40,7 +40,7 @@ const (
 )
 
 type Response struct {
-	ServerTimestamp int              `json:"serverTimestamp"` // Unix timestamp
+	ServerTimestamp int64            `json:"serverTimestamp"` // Unix timestamp
 	Instrument      []Instrument     `json:"instrument,omitempty"`
 	Country         []Country        `json:"country,omitempty"`
 	Company         []Company        `json:"company,omitempty"`
@@ -56,8 +56,8 @@ type Response struct {
 }
 
 type Request struct {
-	CurrentClientTimestamp int              `json:"currentClientTimestamp"` // Unix timestamp
-	ServerTimestamp        int              `json:"serverTimestamp"`        // Unix timestamp
+	CurrentClientTimestamp int64            `json:"currentClientTimestamp"` // Unix timestamp
+	ServerTimestamp        int64            `json:"serverTimestamp"`        // Unix timestamp
 	ForceFetch             []EntityType     `json:"forceFetch,omitempty"`
 	Instrument             []Instrument     `json:"instrument,omitempty"`
 	Country                []Country        `json:"country,omitempty"`
