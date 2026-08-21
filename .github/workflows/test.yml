@@ -9,12 +9,8 @@ permissions:
 
 jobs:
   lint:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-    name: Lint (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
+    name: Lint
+    runs-on: ubuntu-latest
 
     steps:
       - name: Check out code
@@ -23,8 +19,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v7.0.0
         with:
-          go-version-file: go.mod
-          check-latest: true
+          go-version: '1.26.6'
           cache-dependency-path: go.sum
 
       - name: Lint by go vet
@@ -39,8 +34,20 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-    name: Test (${{ matrix.os }})
+        include:
+          - os: ubuntu-latest
+            go: '1.26.6'
+            coverage: true
+          - os: macos-latest
+            go: '1.26.6'
+            coverage: false
+          - os: windows-latest
+            go: '1.26.6'
+            coverage: false
+          - os: ubuntu-latest
+            go: '1.27.0-rc.3'
+            coverage: false
+    name: Test (${{ matrix.os }}, Go ${{ matrix.go }})
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -50,14 +57,18 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v7.0.0
         with:
-          go-version-file: go.mod
-          check-latest: true
+          go-version: ${{ matrix.go }}
           cache-dependency-path: go.sum
 
       - name: Run unit tests
         run: go test -v ./... -coverprofile=coverage.txt
 
+      - name: Run race detector
+        if: matrix.coverage
+        run: go test -race ./...
+
       - name: Upload coverage report to Codecov
+        if: matrix.coverage
         uses: codecov/codecov-action@v7.0.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
