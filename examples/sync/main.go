@@ -20,7 +20,7 @@ func main() {
 	// Example 1: Full sync
 	fullSyncResp, err := client.FullSync(ctx)
 	if err != nil {
-		log.Printf("Full sync failed: %v", err)
+		log.Fatalf("Full sync failed: %v", err)
 	}
 
 	log.Printf("Full sync completed successfully")
@@ -29,7 +29,7 @@ func main() {
 	lastSync := time.Unix(int64(fullSyncResp.ServerTimestamp), 0)
 	syncResp, err := client.SyncSince(ctx, lastSync)
 	if err != nil {
-		log.Printf("Sync since failed: %v", err)
+		log.Fatalf("Sync since failed: %v", err)
 	}
 
 	log.Printf("Sync since completed successfully")
@@ -42,7 +42,7 @@ func main() {
 		models.EntityTypeTransaction,
 	)
 	if err != nil {
-		log.Printf("Force sync failed: %v", err)
+		log.Fatalf("Force sync failed: %v", err)
 	}
 
 	log.Printf("Force sync completed successfully")

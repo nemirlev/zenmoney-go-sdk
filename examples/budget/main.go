@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/nemirlev/zenmoney-go-sdk/v2/api"
@@ -31,7 +32,7 @@ func main() {
 	// Process budgets
 	currentMonth := time.Now().Format("2006-01")
 	for _, budget := range resp.Budget {
-		if budget.Date[:7] == currentMonth {
+		if strings.HasPrefix(budget.Date, currentMonth+"-") {
 			fmt.Printf("Budget for %s:\n", budget.Date)
 			fmt.Printf("  Income: %.2f (Locked: %v)\n", budget.Income, budget.IncomeLock)
 			fmt.Printf("  Outcome: %.2f (Locked: %v)\n", budget.Outcome, budget.OutcomeLock)

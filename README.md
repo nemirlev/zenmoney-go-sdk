@@ -1,7 +1,7 @@
 # ZenMoney API GO SDK.
 
-[![GoDoc](https://godoc.org/github.com/zenapi/zenapi?status.svg)](https://godoc.org/github.com/nemirlev/zenmoney-go-sdk)
-[![Go Report Card](https://goreportcard.com/badge/github.com/nemirlev/zenmoney-go-sdk)](https://goreportcard.com/report/github.com/nemirlev/zenmoney-go-sdk)
+[![Go Reference](https://pkg.go.dev/badge/github.com/nemirlev/zenmoney-go-sdk/v2.svg)](https://pkg.go.dev/github.com/nemirlev/zenmoney-go-sdk/v2)
+[![Go Report Card](https://goreportcard.com/badge/github.com/nemirlev/zenmoney-go-sdk/v2)](https://goreportcard.com/report/github.com/nemirlev/zenmoney-go-sdk/v2)
 ![GitHub License](https://img.shields.io/github/license/nemirlev/zenmoney-go-sdk)
 ![GitHub go.mod Go version (subdirectory of monorepo)](https://img.shields.io/github/go-mod/go-version/nemirlev/zenmoney-go-sdk)
 ![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/nemirlev/zenmoney-go-sdk)
@@ -22,7 +22,7 @@ ZenMoney's financial data synchronization API, including accounts, transactions,
 ## Installation
 
 ```bash
-go get github.com/nemirlev/zenmoney-go-sdk
+go get github.com/nemirlev/zenmoney-go-sdk/v2
 ```
 
 ## Quick Start
@@ -53,7 +53,9 @@ func main() {
 
 	// Work with the data
 	for _, account := range resp.Account {
-		log.Printf("Account: %s, Balance: %.2f", account.Title, *account.Balance)
+		if account.Balance != nil {
+			log.Printf("Account: %s, Balance: %.2f", account.Title, *account.Balance)
+		}
 	}
 }
 ```
@@ -71,11 +73,15 @@ client, err := api.NewClient(
 )
 ```
 
+`WithTimeout` limits the complete SDK operation, including retry waits. Retry
+attempts are made only for transport errors; HTTP responses are returned as
+typed API errors.
+
 ## Available Operations
 
 - Full synchronization
 - Incremental synchronization from a specific timestamp
-- Force sync specific entities
+- Force sync specific entities from a known server timestamp
 - Custom sync with specific parameters
 - Suggestions for categories and operation merchants
 
@@ -85,14 +91,16 @@ The SDK provides structured error types for better error handling:
 
 ```go
 if err != nil {
-    var apiErr *errors.Error
+    var apiErr *api.Error
     if errors.As(err, &apiErr) {
         switch apiErr.Code {
-        case errors.ErrInvalidToken:
+        case api.ErrInvalidToken:
             // Handle authentication error
-        case errors.ErrServerError:
+        case api.ErrRateLimit:
+            // Respect the API rate limit
+        case api.ErrServerError:
             // Handle server error
-        case errors.ErrNetworkError:
+        case api.ErrNetworkError:
             // Handle network error
         }
     }
@@ -113,7 +121,7 @@ Check out the [examples](./examples) directory for more detailed usage examples:
 ## API Documentation
 
 For detailed API documentation, visit
-the [Go package documentation](https://pkg.go.dev/github.com/nemirlev/zenmoney-go-sdk).
+the [Go package documentation](https://pkg.go.dev/github.com/nemirlev/zenmoney-go-sdk/v2).
 
 For ZenMoney API documentation, visit
 the [official API documentation](https://github.com/zenmoney/ZenPlugins/wiki/ZenMoney-API).

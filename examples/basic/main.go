@@ -3,8 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/nemirlev/zenmoney-go-sdk/v2/api"
 	"log"
+
+	"github.com/nemirlev/zenmoney-go-sdk/v2/api"
 )
 
 func main() {
@@ -23,7 +24,9 @@ func main() {
 
 	// Print accounts
 	for _, account := range resp.Account {
-		fmt.Printf("Account: %s, Balance: %.2f\n", account.Title, *account.Balance)
+		if account.Balance != nil {
+			fmt.Printf("Account: %s, Balance: %.2f\n", account.Title, *account.Balance)
+		}
 	}
 
 	// Print recent transactions

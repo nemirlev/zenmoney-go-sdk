@@ -16,7 +16,7 @@ func main() {
 		api.WithRetryPolicy(5, 2*time.Second),
 	)
 	if err != nil {
-		log.Printf("Failed to create client1: %v", err)
+		log.Fatalf("Failed to create client1: %v", err)
 	}
 
 	// Example 2: Client with custom HTTP client and base URL
@@ -28,12 +28,12 @@ func main() {
 		}),
 	)
 	if err != nil {
-		log.Printf("Failed to create client2: %v", err)
+		log.Fatalf("Failed to create client2: %v", err)
 	}
 
 	// Use clients...
 	_ = client1
 	_ = client2
 
-	println("Clients created successfully")
+	log.Print("Clients created successfully")
 }
