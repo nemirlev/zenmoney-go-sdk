@@ -19,7 +19,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.26.6'
+          go-version: '1.27.0'
           cache-dependency-path: go.sum
 
       - name: Lint by go vet
@@ -31,21 +31,23 @@ jobs:
           version: v2.13.1
 
   test:
+    env:
+      GOTOOLCHAIN: local
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
-            go: '1.26.6'
+            go: '1.27.0'
             coverage: true
           - os: macos-latest
-            go: '1.26.6'
+            go: '1.27.0'
             coverage: false
           - os: windows-latest
-            go: '1.26.6'
+            go: '1.27.0'
             coverage: false
           - os: ubuntu-latest
-            go: '1.27.0-rc.3'
+            go: '1.26.6'
             coverage: false
     name: Test (${{ matrix.os }}, Go ${{ matrix.go }})
     runs-on: ${{ matrix.os }}
