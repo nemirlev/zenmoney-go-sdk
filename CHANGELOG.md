@@ -5,6 +5,43 @@
 - Update Go version and dependencies
 - Update Go version on github actions
 - Update CI workflow actions and matrix usage
+## [3.0.0](https://github.com/nemirlev/zenmoney-go-sdk/compare/v2.0.7...v3.0.0) (2026-08-22)
+
+
+### ⚠ BREAKING CHANGES
+
+* v2.0.7 changed Unix timestamps from int to int64 and nullable string fields to pointers.
+
+### 🚀 Features
+
+* add country entity type ([0f784e5](https://github.com/nemirlev/zenmoney-go-sdk/commit/0f784e519ba08ef76157d1b7ffe5480d6538fd0d))
+* add optional structured diagnostics ([bd50c3b](https://github.com/nemirlev/zenmoney-go-sdk/commit/bd50c3b38468b90edcd45196e6a4403ff40cf728))
+* add structured SDK diagnostics ([5bd9a99](https://github.com/nemirlev/zenmoney-go-sdk/commit/5bd9a993da303db4a9c2ddd0967adaaa7df9698a))
+* expose bounded HTTP error details ([45e9215](https://github.com/nemirlev/zenmoney-go-sdk/commit/45e9215b9dfd0437f1b27db43386c417833ffe9f))
+* limit successful response bodies ([f709b9b](https://github.com/nemirlev/zenmoney-go-sdk/commit/f709b9bcf4b15973c7da5b12183d72276f51a44e))
+
+
+### 🐛 Bug Fixes
+
+* validate and resolve API base URLs ([f75253b](https://github.com/nemirlev/zenmoney-go-sdk/commit/f75253b4183d9da8d5ce992934012c506b600748))
+
+
+### 🧪 Testing
+
+* audit models against tracked diff fixture ([3703fb0](https://github.com/nemirlev/zenmoney-go-sdk/commit/3703fb04497ac045701cc5c4c0e00d60b4c850d1))
+* cover public API delegation ([a8824c2](https://github.com/nemirlev/zenmoney-go-sdk/commit/a8824c2e1e751f9b0419269ef8cb778d30e7e25e))
+
+
+### 📚 Documentation
+
+* improve public API documentation ([82558ca](https://github.com/nemirlev/zenmoney-go-sdk/commit/82558ca8e1fa1233cd104105b3d2807fa5c3a317))
+* mark model alignment as breaking ([5f23be3](https://github.com/nemirlev/zenmoney-go-sdk/commit/5f23be38be9876ec1565aef276e19a173716c3f4))
+
+
+### 👷 Continuous Integration
+
+* add Codecov components ([694eb7b](https://github.com/nemirlev/zenmoney-go-sdk/commit/694eb7ba530c3843cd96fd42ab9bbd71d4f7b2f9))
+
 ## [2.0.7](https://github.com/nemirlev/zenmoney-go-sdk/compare/v2.0.6...v2.0.7) (2026-08-21)
 
 
