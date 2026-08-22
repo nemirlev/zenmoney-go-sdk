@@ -107,6 +107,10 @@ if err != nil {
 }
 ```
 
+HTTP errors also expose `StatusCode`, `RequestID`, `BodySnippet`, and
+`BodyTruncated`. The response body fragment is limited to 8 KiB and is not
+included in the error string.
+
 ## Examples
 
 Check out the [examples](./examples) directory for more detailed usage examples:

@@ -354,6 +354,40 @@ func TestSync(t *testing.T) {
 		}
 	})
 
+	t.Run("includes bounded HTTP error details", func(t *testing.T) {
+		responseBody := strings.Repeat("x", int(maxHTTPErrorBodySnippet)+100)
+		httpClient := &http.Client{
+			Transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
+				return &http.Response{
+					StatusCode: http.StatusBadGateway,
+					Body:       io.NopCloser(strings.NewReader(responseBody)),
+					Header: http.Header{
+						"X-Request-Id": []string{"request-123"},
+					},
+				}, nil
+			}),
+		}
+		client, err := NewClient(
+			"test-token",
+			"https://api.test.com/",
+			httpClient,
+			time.Second,
+			0,
+			0,
+		)
+		require.NoError(t, err)
+
+		_, err = client.Sync(context.Background(), models.Request{})
+
+		var apiErr *errors.Error
+		require.ErrorAs(t, err, &apiErr)
+		require.Equal(t, http.StatusBadGateway, apiErr.StatusCode)
+		require.Equal(t, "request-123", apiErr.RequestID)
+		require.Equal(t, strings.Repeat("x", int(maxHTTPErrorBodySnippet)), apiErr.BodySnippet)
+		require.True(t, apiErr.BodyTruncated)
+		require.NotContains(t, apiErr.Error(), apiErr.BodySnippet)
+	})
+
 	t.Run("rejects nil context", func(t *testing.T) {
 		client, err := NewClient(
 			"test-token",

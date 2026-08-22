@@ -9,11 +9,14 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/nemirlev/zenmoney-go-sdk/v2/errors"
 	"github.com/nemirlev/zenmoney-go-sdk/v2/models"
 )
+
+const maxHTTPErrorBodySnippet int64 = 8 << 10
 
 // Client represents internal implementation of ZenMoney API client
 type Client struct {
@@ -143,6 +146,9 @@ func readResponse(resp *http.Response) ([]byte, error) {
 	if resp.Body == nil {
 		return nil, errors.New(errors.ErrNetworkError, "got response with nil body", nil)
 	}
+	if resp.StatusCode >= http.StatusBadRequest {
+		return nil, readHTTPError(resp)
+	}
 
 	resBody, readErr := io.ReadAll(resp.Body)
 	closeErr := resp.Body.Close()
@@ -153,15 +159,41 @@ func readResponse(resp *http.Response) ([]byte, error) {
 		return nil, errors.New(errors.ErrNetworkError, "failed to close response body", closeErr)
 	}
 
-	if resp.StatusCode >= http.StatusBadRequest {
-		return nil, &errors.Error{
-			Code:       errorCodeForStatus(resp.StatusCode),
-			Message:    fmt.Sprintf("server returned error status: %d", resp.StatusCode),
-			StatusCode: resp.StatusCode,
+	return resBody, nil
+}
+
+func readHTTPError(resp *http.Response) error {
+	body, readErr := io.ReadAll(io.LimitReader(resp.Body, maxHTTPErrorBodySnippet+1))
+	truncated := int64(len(body)) > maxHTTPErrorBodySnippet
+	if truncated {
+		body = body[:maxHTTPErrorBodySnippet]
+	}
+	closeErr := resp.Body.Close()
+
+	cause := readErr
+	if cause == nil {
+		cause = closeErr
+	}
+
+	return &errors.Error{
+		Code:          errorCodeForStatus(resp.StatusCode),
+		Message:       fmt.Sprintf("server returned error status: %d", resp.StatusCode),
+		Err:           cause,
+		StatusCode:    resp.StatusCode,
+		BodySnippet:   strings.ToValidUTF8(string(body), "\uFFFD"),
+		BodyTruncated: truncated,
+		RequestID:     responseRequestID(resp.Header),
+	}
+}
+
+func responseRequestID(header http.Header) string {
+	for _, name := range []string{"X-Request-ID", "Request-ID"} {
+		if value := header.Get(name); value != "" {
+			return value
 		}
 	}
 
-	return resBody, nil
+	return ""
 }
 
 func closeResponse(resp *http.Response) {

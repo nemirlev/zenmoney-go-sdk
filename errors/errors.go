@@ -22,6 +22,12 @@ type Error struct {
 
 	// StatusCode is the HTTP response status. It is zero for non-HTTP errors.
 	StatusCode int
+	// BodySnippet is a bounded fragment of an HTTP error response body.
+	BodySnippet string
+	// BodyTruncated reports whether BodySnippet omits bytes from the response body.
+	BodyTruncated bool
+	// RequestID identifies the failed request when the server provides an ID header.
+	RequestID string
 }
 
 func (e *Error) Error() string {
