@@ -1,8 +1,8 @@
 package api
 
 import (
-	"github.com/nemirlev/zenmoney-go-sdk/v2/errors"
-	"github.com/nemirlev/zenmoney-go-sdk/v2/internal/client"
+	"github.com/nemirlev/zenmoney-go-sdk/v3/errors"
+	"github.com/nemirlev/zenmoney-go-sdk/v3/internal/client"
 )
 
 // Client provides access to the ZenMoney synchronization and suggestion APIs.

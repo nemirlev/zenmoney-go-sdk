@@ -3,7 +3,7 @@ package api
 import (
 	"context"
 
-	"github.com/nemirlev/zenmoney-go-sdk/v2/models"
+	"github.com/nemirlev/zenmoney-go-sdk/v3/models"
 )
 
 // Suggest requests merchant, payee, and tag suggestions for transaction. The

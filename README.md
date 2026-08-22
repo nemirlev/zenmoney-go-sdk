@@ -1,7 +1,7 @@
 # ZenMoney API GO SDK.
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/nemirlev/zenmoney-go-sdk/v2.svg)](https://pkg.go.dev/github.com/nemirlev/zenmoney-go-sdk/v2)
-[![Go Report Card](https://goreportcard.com/badge/github.com/nemirlev/zenmoney-go-sdk/v2)](https://goreportcard.com/report/github.com/nemirlev/zenmoney-go-sdk/v2)
+[![Go Reference](https://pkg.go.dev/badge/github.com/nemirlev/zenmoney-go-sdk/v3.svg)](https://pkg.go.dev/github.com/nemirlev/zenmoney-go-sdk/v3)
+[![Go Report Card](https://goreportcard.com/badge/github.com/nemirlev/zenmoney-go-sdk/v3)](https://goreportcard.com/report/github.com/nemirlev/zenmoney-go-sdk/v3)
 ![GitHub License](https://img.shields.io/github/license/nemirlev/zenmoney-go-sdk)
 ![GitHub go.mod Go version (subdirectory of monorepo)](https://img.shields.io/github/go-mod/go-version/nemirlev/zenmoney-go-sdk)
 ![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/nemirlev/zenmoney-go-sdk)
@@ -23,7 +23,7 @@ ZenMoney's financial data synchronization API, including accounts, transactions,
 ## Installation
 
 ```bash
-go get github.com/nemirlev/zenmoney-go-sdk/v2
+go get github.com/nemirlev/zenmoney-go-sdk/v3
 ```
 
 ## Quick Start
@@ -35,7 +35,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/nemirlev/zenmoney-go-sdk/v2/api"
+	"github.com/nemirlev/zenmoney-go-sdk/v3/api"
 )
 
 func main() {
@@ -152,7 +152,7 @@ Check out the [examples](./examples) directory for more detailed usage examples:
 ## API Documentation
 
 For detailed API documentation, visit
-the [Go package documentation](https://pkg.go.dev/github.com/nemirlev/zenmoney-go-sdk/v2).
+the [Go package documentation](https://pkg.go.dev/github.com/nemirlev/zenmoney-go-sdk/v3).
 
 For ZenMoney API documentation, visit
 the [official API documentation](https://github.com/zenmoney/ZenPlugins/wiki/ZenMoney-API).

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nemirlev/zenmoney-go-sdk/v2/models"
+	"github.com/nemirlev/zenmoney-go-sdk/v3/models"
 	"github.com/stretchr/testify/require"
 )
 

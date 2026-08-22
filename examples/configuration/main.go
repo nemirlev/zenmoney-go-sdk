@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/nemirlev/zenmoney-go-sdk/v2/api"
+	"github.com/nemirlev/zenmoney-go-sdk/v3/api"
 )
 
 func main() {

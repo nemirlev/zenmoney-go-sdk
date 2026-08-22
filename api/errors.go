@@ -1,6 +1,6 @@
 package api
 
-import sdkerrors "github.com/nemirlev/zenmoney-go-sdk/v2/errors"
+import sdkerrors "github.com/nemirlev/zenmoney-go-sdk/v3/errors"
 
 // ErrorCode identifies a category of SDK error.
 type ErrorCode = sdkerrors.ErrorCode

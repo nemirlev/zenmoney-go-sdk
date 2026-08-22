@@ -15,8 +15,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nemirlev/zenmoney-go-sdk/v2/errors"
-	"github.com/nemirlev/zenmoney-go-sdk/v2/models"
+	"github.com/nemirlev/zenmoney-go-sdk/v3/errors"
+	"github.com/nemirlev/zenmoney-go-sdk/v3/models"
 )
 
 const maxHTTPErrorBodySnippet int64 = 8 << 10
