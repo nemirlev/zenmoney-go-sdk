@@ -29,6 +29,7 @@ func NewClient(token string, opts ...Option) (*Client, error) {
 		cfg.timeout,
 		cfg.retryAttempts,
 		cfg.retryWaitTime,
+		cfg.maxResponseSize,
 	)
 	if err != nil {
 		return nil, err

@@ -18,6 +18,8 @@ import (
 
 type roundTripFunc func(*http.Request) (*http.Response, error)
 
+const testMaxResponseSize int64 = 64 << 20
+
 func (f roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 	return f(req)
 }
@@ -32,6 +34,7 @@ func setupTestServer(t *testing.T, handler http.HandlerFunc) (*httptest.Server, 
 		time.Second,
 		0,
 		time.Second,
+		testMaxResponseSize,
 	)
 	require.NoError(t, err)
 
@@ -47,6 +50,7 @@ func TestNewClient(t *testing.T) {
 			time.Second,
 			3,
 			time.Second,
+			testMaxResponseSize,
 		)
 		require.NoError(t, err)
 		require.NotNil(t, client)
@@ -60,6 +64,7 @@ func TestNewClient(t *testing.T) {
 			time.Second,
 			3,
 			time.Second,
+			testMaxResponseSize,
 		)
 		require.Error(t, err)
 		require.Nil(t, client)
@@ -89,6 +94,7 @@ func TestNewClient(t *testing.T) {
 			time.Second,
 			0,
 			0,
+			testMaxResponseSize,
 		)
 		require.NoError(t, err)
 
@@ -98,38 +104,51 @@ func TestNewClient(t *testing.T) {
 
 	t.Run("validates transport settings", func(t *testing.T) {
 		tests := []struct {
-			name          string
-			httpClient    *http.Client
-			timeout       time.Duration
-			retryAttempts int
-			retryWaitTime time.Duration
+			name            string
+			httpClient      *http.Client
+			timeout         time.Duration
+			retryAttempts   int
+			retryWaitTime   time.Duration
+			maxResponseSize int64
 		}{
 			{
-				name:          "nil HTTP client",
-				timeout:       time.Second,
-				retryAttempts: 1,
-				retryWaitTime: time.Second,
+				name:            "nil HTTP client",
+				timeout:         time.Second,
+				retryAttempts:   1,
+				retryWaitTime:   time.Second,
+				maxResponseSize: testMaxResponseSize,
 			},
 			{
-				name:          "negative timeout",
-				httpClient:    &http.Client{},
-				timeout:       -time.Second,
-				retryAttempts: 1,
-				retryWaitTime: time.Second,
+				name:            "negative timeout",
+				httpClient:      &http.Client{},
+				timeout:         -time.Second,
+				retryAttempts:   1,
+				retryWaitTime:   time.Second,
+				maxResponseSize: testMaxResponseSize,
 			},
 			{
-				name:          "negative retry attempts",
-				httpClient:    &http.Client{},
-				timeout:       time.Second,
-				retryAttempts: -1,
-				retryWaitTime: time.Second,
+				name:            "negative retry attempts",
+				httpClient:      &http.Client{},
+				timeout:         time.Second,
+				retryAttempts:   -1,
+				retryWaitTime:   time.Second,
+				maxResponseSize: testMaxResponseSize,
 			},
 			{
-				name:          "negative retry wait",
-				httpClient:    &http.Client{},
-				timeout:       time.Second,
-				retryAttempts: 1,
-				retryWaitTime: -time.Second,
+				name:            "negative retry wait",
+				httpClient:      &http.Client{},
+				timeout:         time.Second,
+				retryAttempts:   1,
+				retryWaitTime:   -time.Second,
+				maxResponseSize: testMaxResponseSize,
+			},
+			{
+				name:            "invalid response size limit",
+				httpClient:      &http.Client{},
+				timeout:         time.Second,
+				retryAttempts:   1,
+				retryWaitTime:   time.Second,
+				maxResponseSize: 0,
 			},
 		}
 
@@ -142,6 +161,7 @@ func TestNewClient(t *testing.T) {
 					tt.timeout,
 					tt.retryAttempts,
 					tt.retryWaitTime,
+					tt.maxResponseSize,
 				)
 
 				require.Nil(t, client)
@@ -208,6 +228,7 @@ func TestSync(t *testing.T) {
 			time.Second,
 			0,
 			time.Second,
+			testMaxResponseSize,
 		)
 		require.NoError(t, err)
 
@@ -245,6 +266,7 @@ func TestSync(t *testing.T) {
 			time.Second,
 			1,
 			0,
+			testMaxResponseSize,
 		)
 		require.NoError(t, err)
 
@@ -273,6 +295,7 @@ func TestSync(t *testing.T) {
 			5*time.Second,
 			3,
 			5*time.Second,
+			testMaxResponseSize,
 		)
 		require.NoError(t, err)
 
@@ -301,6 +324,7 @@ func TestSync(t *testing.T) {
 			20*time.Millisecond,
 			3,
 			time.Second,
+			testMaxResponseSize,
 		)
 		require.NoError(t, err)
 		started := time.Now()
@@ -341,6 +365,7 @@ func TestSync(t *testing.T) {
 					time.Second,
 					0,
 					0,
+					testMaxResponseSize,
 				)
 				require.NoError(t, err)
 
@@ -374,6 +399,7 @@ func TestSync(t *testing.T) {
 			time.Second,
 			0,
 			0,
+			testMaxResponseSize,
 		)
 		require.NoError(t, err)
 
@@ -388,6 +414,52 @@ func TestSync(t *testing.T) {
 		require.NotContains(t, apiErr.Error(), apiErr.BodySnippet)
 	})
 
+	t.Run("enforces successful response body limit", func(t *testing.T) {
+		responseBody := `{"serverTimestamp":1642300800}`
+		tests := []struct {
+			name    string
+			limit   int64
+			wantErr bool
+		}{
+			{name: "exact limit", limit: int64(len(responseBody))},
+			{name: "over limit", limit: int64(len(responseBody) - 1), wantErr: true},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				httpClient := &http.Client{
+					Transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
+						return &http.Response{
+							StatusCode: http.StatusOK,
+							Body:       io.NopCloser(strings.NewReader(responseBody)),
+							Header:     make(http.Header),
+						}, nil
+					}),
+				}
+				client, err := NewClient(
+					"test-token",
+					"https://api.test.com/",
+					httpClient,
+					time.Second,
+					0,
+					0,
+					tt.limit,
+				)
+				require.NoError(t, err)
+
+				_, err = client.Sync(context.Background(), models.Request{})
+				if !tt.wantErr {
+					require.NoError(t, err)
+					return
+				}
+
+				var apiErr *errors.Error
+				require.ErrorAs(t, err, &apiErr)
+				require.Equal(t, errors.ErrResponseTooLarge, apiErr.Code)
+			})
+		}
+	})
+
 	t.Run("rejects nil context", func(t *testing.T) {
 		client, err := NewClient(
 			"test-token",
@@ -396,6 +468,7 @@ func TestSync(t *testing.T) {
 			time.Second,
 			0,
 			0,
+			testMaxResponseSize,
 		)
 		require.NoError(t, err)
 

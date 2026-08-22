@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/url"
 	"strings"
@@ -20,16 +21,17 @@ const maxHTTPErrorBodySnippet int64 = 8 << 10
 
 // Client represents internal implementation of ZenMoney API client
 type Client struct {
-	baseURL       *url.URL
-	token         string
-	httpClient    *http.Client
-	timeout       time.Duration
-	retryAttempts int
-	retryWaitTime time.Duration
+	baseURL         *url.URL
+	token           string
+	httpClient      *http.Client
+	timeout         time.Duration
+	retryAttempts   int
+	retryWaitTime   time.Duration
+	maxResponseSize int64
 }
 
 // NewClient creates a new instance of the internal API client
-func NewClient(token string, baseURL string, httpClient *http.Client, timeout time.Duration, retryAttempts int, retryWaitTime time.Duration) (*Client, error) {
+func NewClient(token string, baseURL string, httpClient *http.Client, timeout time.Duration, retryAttempts int, retryWaitTime time.Duration, maxResponseSize int64) (*Client, error) {
 	if token == "" {
 		return nil, errors.New(errors.ErrInvalidToken, "token is not provided", nil)
 	}
@@ -44,6 +46,9 @@ func NewClient(token string, baseURL string, httpClient *http.Client, timeout ti
 	}
 	if retryWaitTime < 0 {
 		return nil, errors.New(errors.ErrInvalidRequest, "retry wait time must not be negative", nil)
+	}
+	if maxResponseSize <= 0 || maxResponseSize == math.MaxInt64 {
+		return nil, errors.New(errors.ErrInvalidRequest, "maximum response size must be positive and less than math.MaxInt64", nil)
 	}
 	parsedBaseURL, err := url.Parse(baseURL)
 	if err != nil {
@@ -60,12 +65,13 @@ func NewClient(token string, baseURL string, httpClient *http.Client, timeout ti
 	}
 
 	return &Client{
-		baseURL:       parsedBaseURL,
-		token:         token,
-		httpClient:    httpClient,
-		timeout:       timeout,
-		retryAttempts: retryAttempts,
-		retryWaitTime: retryWaitTime,
+		baseURL:         parsedBaseURL,
+		token:           token,
+		httpClient:      httpClient,
+		timeout:         timeout,
+		retryAttempts:   retryAttempts,
+		retryWaitTime:   retryWaitTime,
+		maxResponseSize: maxResponseSize,
 	}, nil
 }
 
@@ -104,7 +110,7 @@ func (c *Client) sendRequest(ctx context.Context, endpoint string, method string
 
 		resp, requestErr := c.httpClient.Do(req)
 		if requestErr == nil {
-			return readResponse(resp)
+			return readResponse(resp, c.maxResponseSize)
 		}
 		closeResponse(resp)
 
@@ -139,7 +145,7 @@ func waitForRetry(ctx context.Context, waitTime time.Duration) error {
 	}
 }
 
-func readResponse(resp *http.Response) ([]byte, error) {
+func readResponse(resp *http.Response, maxResponseSize int64) ([]byte, error) {
 	if resp == nil {
 		return nil, errors.New(errors.ErrNetworkError, "got nil response", nil)
 	}
@@ -150,10 +156,13 @@ func readResponse(resp *http.Response) ([]byte, error) {
 		return nil, readHTTPError(resp)
 	}
 
-	resBody, readErr := io.ReadAll(resp.Body)
+	resBody, readErr := io.ReadAll(io.LimitReader(resp.Body, maxResponseSize+1))
 	closeErr := resp.Body.Close()
 	if readErr != nil {
 		return nil, errors.New(errors.ErrNetworkError, "failed to read response body", readErr)
+	}
+	if int64(len(resBody)) > maxResponseSize {
+		return nil, errors.New(errors.ErrResponseTooLarge, "response body exceeds configured limit", nil)
 	}
 	if closeErr != nil {
 		return nil, errors.New(errors.ErrNetworkError, "failed to close response body", closeErr)

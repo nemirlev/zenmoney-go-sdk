@@ -2,7 +2,10 @@ package api_test
 
 import (
 	"context"
+	"io"
+	"math"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -26,6 +29,9 @@ func TestClientOptionsValidation(t *testing.T) {
 		{name: "nil option", opts: []api.Option{nilOption}},
 		{name: "nil HTTP client", opts: []api.Option{api.WithHTTPClient(nil)}},
 		{name: "negative timeout", opts: []api.Option{api.WithTimeout(-time.Second)}},
+		{name: "zero response limit", opts: []api.Option{api.WithMaxResponseSize(0)}},
+		{name: "negative response limit", opts: []api.Option{api.WithMaxResponseSize(-1)}},
+		{name: "overflowing response limit", opts: []api.Option{api.WithMaxResponseSize(math.MaxInt64)}},
 		{name: "empty base URL", opts: []api.Option{api.WithBaseURL("")}},
 		{name: "malformed base URL", opts: []api.Option{api.WithBaseURL("://invalid")}},
 		{name: "relative base URL", opts: []api.Option{api.WithBaseURL("api.test.com/v8/")}},
@@ -74,4 +80,28 @@ func TestWithTimeoutLimitsRequest(t *testing.T) {
 
 	require.ErrorIs(t, err, context.DeadlineExceeded)
 	require.Less(t, time.Since(started), 500*time.Millisecond)
+}
+
+func TestWithMaxResponseSizeLimitsResponse(t *testing.T) {
+	httpClient := &http.Client{
+		Transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Body:       io.NopCloser(strings.NewReader(`{}`)),
+				Header:     make(http.Header),
+			}, nil
+		}),
+	}
+	client, err := api.NewClient(
+		"test-token",
+		api.WithHTTPClient(httpClient),
+		api.WithMaxResponseSize(1),
+	)
+	require.NoError(t, err)
+
+	_, err = client.FullSync(context.Background())
+
+	var apiErr *api.Error
+	require.ErrorAs(t, err, &apiErr)
+	require.Equal(t, api.ErrResponseTooLarge, apiErr.Code)
 }

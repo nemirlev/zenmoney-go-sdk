@@ -5,13 +5,17 @@ import (
 	"time"
 )
 
+// DefaultMaxResponseSize is the default maximum successful response body size.
+const DefaultMaxResponseSize int64 = 64 << 20
+
 // Config holds client configuration settings
 type Config struct {
-	baseURL       string
-	httpClient    *http.Client
-	timeout       time.Duration
-	retryAttempts int
-	retryWaitTime time.Duration
+	baseURL         string
+	httpClient      *http.Client
+	timeout         time.Duration
+	retryAttempts   int
+	retryWaitTime   time.Duration
+	maxResponseSize int64
 }
 
 // Option represents a function for configuring the client
@@ -20,11 +24,20 @@ type Option func(*Config)
 // defaultConfig returns default configuration settings
 func defaultConfig() *Config {
 	return &Config{
-		baseURL:       "https://api.zenmoney.ru/v8/",
-		httpClient:    &http.Client{},
-		timeout:       30 * time.Second,
-		retryAttempts: 3,
-		retryWaitTime: 1 * time.Second,
+		baseURL:         "https://api.zenmoney.ru/v8/",
+		httpClient:      &http.Client{},
+		timeout:         30 * time.Second,
+		retryAttempts:   3,
+		retryWaitTime:   1 * time.Second,
+		maxResponseSize: DefaultMaxResponseSize,
+	}
+}
+
+// WithMaxResponseSize limits successful response bodies to maxBytes.
+// maxBytes must be positive and less than the maximum int64 value.
+func WithMaxResponseSize(maxBytes int64) Option {
+	return func(c *Config) {
+		c.maxResponseSize = maxBytes
 	}
 }
 

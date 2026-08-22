@@ -7,11 +7,12 @@ import "fmt"
 type ErrorCode string
 
 const (
-	ErrInvalidToken   ErrorCode = "INVALID_TOKEN"
-	ErrInvalidRequest ErrorCode = "INVALID_REQUEST"
-	ErrServerError    ErrorCode = "SERVER_ERROR"
-	ErrNetworkError   ErrorCode = "NETWORK_ERROR"
-	ErrRateLimit      ErrorCode = "RATE_LIMIT"
+	ErrInvalidToken     ErrorCode = "INVALID_TOKEN"
+	ErrInvalidRequest   ErrorCode = "INVALID_REQUEST"
+	ErrServerError      ErrorCode = "SERVER_ERROR"
+	ErrNetworkError     ErrorCode = "NETWORK_ERROR"
+	ErrRateLimit        ErrorCode = "RATE_LIMIT"
+	ErrResponseTooLarge ErrorCode = "RESPONSE_TOO_LARGE"
 )
 
 // Error describes an error returned by the SDK.

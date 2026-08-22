@@ -69,6 +69,7 @@ client, err := api.NewClient(
     "your-token-here",
     api.WithTimeout(45*time.Second),
     api.WithRetryPolicy(5, 2*time.Second),
+    api.WithMaxResponseSize(128 << 20), // 128 MiB
     api.WithBaseURL("https://custom-api.zenmoney.ru/v8/"),
 )
 ```
@@ -76,6 +77,9 @@ client, err := api.NewClient(
 `WithTimeout` limits the complete SDK operation, including retry waits. Retry
 attempts are made only for transport errors; HTTP responses are returned as
 typed API errors.
+
+Successful response bodies are limited to 64 MiB by default. Use
+`WithMaxResponseSize` when a full synchronization is expected to be larger.
 
 ## Available Operations
 
@@ -102,6 +106,8 @@ if err != nil {
             // Handle server error
         case api.ErrNetworkError:
             // Handle network error
+        case api.ErrResponseTooLarge:
+            // Raise the configured response limit if the payload is expected
         }
     }
 }
