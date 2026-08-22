@@ -5,6 +5,18 @@
 - Update Go version and dependencies
 - Update Go version on github actions
 - Update CI workflow actions and matrix usage
+## [3.0.1](https://github.com/nemirlev/zenmoney-go-sdk/compare/v3.0.0...v3.0.1) (2026-08-22)
+
+
+### 🐛 Bug Fixes
+
+* **module:** update module path to v3 ([fff1418](https://github.com/nemirlev/zenmoney-go-sdk/commit/fff141892bc2b00573d3f4f01cb086e4893cc182))
+
+
+### 📚 Documentation
+
+* replace Go Report Card badge ([1852bd5](https://github.com/nemirlev/zenmoney-go-sdk/commit/1852bd53dc4937e47cc7fdc6879c30a8b79b4412))
+
 ## [3.0.0](https://github.com/nemirlev/zenmoney-go-sdk/compare/v2.0.7...v3.0.0) (2026-08-22)
 
 
