@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/nemirlev/zenmoney-go-sdk/v2/errors"
@@ -16,7 +17,7 @@ import (
 
 // Client represents internal implementation of ZenMoney API client
 type Client struct {
-	baseURL       string
+	baseURL       *url.URL
 	token         string
 	httpClient    *http.Client
 	timeout       time.Duration
@@ -41,9 +42,22 @@ func NewClient(token string, baseURL string, httpClient *http.Client, timeout ti
 	if retryWaitTime < 0 {
 		return nil, errors.New(errors.ErrInvalidRequest, "retry wait time must not be negative", nil)
 	}
+	parsedBaseURL, err := url.Parse(baseURL)
+	if err != nil {
+		return nil, errors.New(errors.ErrInvalidRequest, "base URL is invalid", err)
+	}
+	if parsedBaseURL.Scheme != "http" && parsedBaseURL.Scheme != "https" {
+		return nil, errors.New(errors.ErrInvalidRequest, "base URL must use HTTP or HTTPS", nil)
+	}
+	if parsedBaseURL.Host == "" {
+		return nil, errors.New(errors.ErrInvalidRequest, "base URL must be absolute and include a host", nil)
+	}
+	if parsedBaseURL.RawQuery != "" || parsedBaseURL.Fragment != "" {
+		return nil, errors.New(errors.ErrInvalidRequest, "base URL must not include a query or fragment", nil)
+	}
 
 	return &Client{
-		baseURL:       baseURL,
+		baseURL:       parsedBaseURL,
 		token:         token,
 		httpClient:    httpClient,
 		timeout:       timeout,
@@ -72,10 +86,11 @@ func (c *Client) sendRequest(ctx context.Context, endpoint string, method string
 	defer cancel()
 
 	for attempt := 0; attempt <= c.retryAttempts; attempt++ {
+		requestURL := c.baseURL.JoinPath(endpoint)
 		req, err := http.NewRequestWithContext(
 			requestCtx,
 			method,
-			c.baseURL+endpoint,
+			requestURL.String(),
 			bytes.NewReader(jsonBody),
 		)
 		if err != nil {

@@ -66,6 +66,36 @@ func TestNewClient(t *testing.T) {
 		require.Equal(t, errors.ErrInvalidToken, err.(*errors.Error).Code)
 	})
 
+	t.Run("joins endpoint with base URL path", func(t *testing.T) {
+		httpClient := &http.Client{
+			Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+				require.Equal(t, "https", req.URL.Scheme)
+				require.Equal(t, "api.test.com", req.URL.Host)
+				require.Equal(t, "/custom/v8/diff/", req.URL.Path)
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Body: io.NopCloser(strings.NewReader(
+						`{"serverTimestamp":1642300800}`,
+					)),
+					Header: make(http.Header),
+				}, nil
+			}),
+		}
+
+		client, err := NewClient(
+			"test-token",
+			"https://api.test.com/custom/v8",
+			httpClient,
+			time.Second,
+			0,
+			0,
+		)
+		require.NoError(t, err)
+
+		_, err = client.FullSync(context.Background())
+		require.NoError(t, err)
+	})
+
 	t.Run("validates transport settings", func(t *testing.T) {
 		tests := []struct {
 			name          string
