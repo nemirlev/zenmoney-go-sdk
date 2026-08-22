@@ -1,0 +1,25 @@
+ignore:
+  - "examples/**"
+
+comment:
+  layout: "header, diff, components"
+
+component_management:
+  default_rules:
+    statuses:
+      - type: project
+        target: auto
+        threshold: 1%
+  individual_components:
+    - component_id: public_api
+      name: Public API
+      paths:
+        - "api/**"
+    - component_id: http_client
+      name: HTTP client
+      paths:
+        - "internal/client/**"
+    - component_id: errors
+      name: Errors
+      paths:
+        - "errors/**"

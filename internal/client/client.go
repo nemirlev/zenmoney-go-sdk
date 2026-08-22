@@ -5,8 +5,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	stdErrors "errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"math"
 	"net/http"
 	"net/url"
@@ -28,10 +30,11 @@ type Client struct {
 	retryAttempts   int
 	retryWaitTime   time.Duration
 	maxResponseSize int64
+	logger          *slog.Logger
 }
 
 // NewClient creates a new instance of the internal API client
-func NewClient(token string, baseURL string, httpClient *http.Client, timeout time.Duration, retryAttempts int, retryWaitTime time.Duration, maxResponseSize int64) (*Client, error) {
+func NewClient(token string, baseURL string, httpClient *http.Client, timeout time.Duration, retryAttempts int, retryWaitTime time.Duration, maxResponseSize int64, logger *slog.Logger) (*Client, error) {
 	if token == "" {
 		return nil, errors.New(errors.ErrInvalidToken, "token is not provided", nil)
 	}
@@ -63,6 +66,9 @@ func NewClient(token string, baseURL string, httpClient *http.Client, timeout ti
 	if parsedBaseURL.RawQuery != "" || parsedBaseURL.Fragment != "" {
 		return nil, errors.New(errors.ErrInvalidRequest, "base URL must not include a query or fragment", nil)
 	}
+	if logger == nil {
+		logger = slog.New(slog.DiscardHandler)
+	}
 
 	return &Client{
 		baseURL:         parsedBaseURL,
@@ -72,6 +78,7 @@ func NewClient(token string, baseURL string, httpClient *http.Client, timeout ti
 		retryAttempts:   retryAttempts,
 		retryWaitTime:   retryWaitTime,
 		maxResponseSize: maxResponseSize,
+		logger:          logger,
 	}, nil
 }
 
@@ -95,6 +102,8 @@ func (c *Client) sendRequest(ctx context.Context, endpoint string, method string
 	defer cancel()
 
 	for attempt := 0; attempt <= c.retryAttempts; attempt++ {
+		attemptNumber := attempt + 1
+		maxAttempts := c.retryAttempts + 1
 		requestURL := c.baseURL.JoinPath(endpoint)
 		req, err := http.NewRequestWithContext(
 			requestCtx,
@@ -108,18 +117,62 @@ func (c *Client) sendRequest(ctx context.Context, endpoint string, method string
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+c.token)
 
+		startedAt := time.Now()
+		c.logger.LogAttrs(
+			requestCtx,
+			slog.LevelDebug,
+			"ZenMoney HTTP request started",
+			slog.String("method", method),
+			slog.String("endpoint", endpoint),
+			slog.Int("attempt", attemptNumber),
+			slog.Int("max_attempts", maxAttempts),
+		)
+
 		resp, requestErr := c.httpClient.Do(req)
 		if requestErr == nil {
-			return readResponse(resp, c.maxResponseSize)
+			resBody, responseErr := readResponse(resp, c.maxResponseSize)
+			attrs := []slog.Attr{
+				slog.String("method", method),
+				slog.String("endpoint", endpoint),
+				slog.Int("attempt", attemptNumber),
+				slog.Int("max_attempts", maxAttempts),
+				slog.Duration("duration", time.Since(startedAt)),
+				slog.Int("status_code", responseStatusCode(resp)),
+				slog.String("request_id", responseRequestID(responseHeader(resp))),
+				slog.String("outcome", "success"),
+			}
+			if responseErr != nil {
+				attrs[len(attrs)-1] = slog.String("outcome", "error")
+				var sdkErr *errors.Error
+				if stdErrors.As(responseErr, &sdkErr) {
+					attrs = append(attrs, slog.String("error_code", string(sdkErr.Code)))
+				}
+			}
+			c.logger.LogAttrs(requestCtx, slog.LevelDebug, "ZenMoney HTTP request completed", attrs...)
+
+			return resBody, responseErr
 		}
 		closeResponse(resp)
 
 		if requestCtx.Err() != nil {
+			c.logTransportFailure(requestCtx, method, endpoint, attemptNumber, maxAttempts, startedAt, "context_ended")
 			return nil, errors.New(errors.ErrNetworkError, "request context ended", requestCtx.Err())
 		}
 		if attempt == c.retryAttempts {
+			c.logTransportFailure(requestCtx, method, endpoint, attemptNumber, maxAttempts, startedAt, "error")
 			return nil, errors.New(errors.ErrNetworkError, "failed to send request after retries", requestErr)
 		}
+
+		c.logger.LogAttrs(
+			requestCtx,
+			slog.LevelWarn,
+			"ZenMoney HTTP request retry scheduled",
+			slog.String("method", method),
+			slog.String("endpoint", endpoint),
+			slog.Int("attempt", attemptNumber),
+			slog.Int("max_attempts", maxAttempts),
+			slog.Duration("retry_wait", c.retryWaitTime),
+		)
 
 		if err := waitForRetry(requestCtx, c.retryWaitTime); err != nil {
 			return nil, errors.New(errors.ErrNetworkError, "retry interrupted", err)
@@ -127,6 +180,37 @@ func (c *Client) sendRequest(ctx context.Context, endpoint string, method string
 	}
 
 	panic("unreachable")
+}
+
+func (c *Client) logTransportFailure(ctx context.Context, method string, endpoint string, attempt int, maxAttempts int, startedAt time.Time, outcome string) {
+	c.logger.LogAttrs(
+		ctx,
+		slog.LevelDebug,
+		"ZenMoney HTTP request completed",
+		slog.String("method", method),
+		slog.String("endpoint", endpoint),
+		slog.Int("attempt", attempt),
+		slog.Int("max_attempts", maxAttempts),
+		slog.Duration("duration", time.Since(startedAt)),
+		slog.String("outcome", outcome),
+		slog.String("error_code", string(errors.ErrNetworkError)),
+	)
+}
+
+func responseStatusCode(resp *http.Response) int {
+	if resp == nil {
+		return 0
+	}
+
+	return resp.StatusCode
+}
+
+func responseHeader(resp *http.Response) http.Header {
+	if resp == nil {
+		return nil
+	}
+
+	return resp.Header
 }
 
 func waitForRetry(ctx context.Context, waitTime time.Duration) error {

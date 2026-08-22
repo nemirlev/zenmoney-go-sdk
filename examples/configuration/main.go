@@ -2,7 +2,9 @@ package main
 
 import (
 	"log"
+	"log/slog"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/nemirlev/zenmoney-go-sdk/v2/api"
@@ -26,6 +28,9 @@ func main() {
 		api.WithHTTPClient(&http.Client{
 			Timeout: 30 * time.Second,
 		}),
+		api.WithLogger(slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
+			Level: slog.LevelDebug,
+		}))),
 	)
 	if err != nil {
 		log.Fatalf("Failed to create client2: %v", err)

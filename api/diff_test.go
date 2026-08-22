@@ -53,6 +53,54 @@ func TestForceSyncEntitiesSincePreservesCursor(t *testing.T) {
 	require.Equal(t, int64(1718454660), response.ServerTimestamp)
 }
 
+func TestSyncSendsProvidedRequest(t *testing.T) {
+	want := models.Request{
+		CurrentClientTimestamp: 1_718_455_000,
+		ServerTimestamp:        1_718_450_000,
+		ForceFetch:             []models.EntityType{models.EntityTypeAccount},
+	}
+	httpClient := &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			require.Equal(t, http.MethodPost, req.Method)
+			require.Equal(t, "/v8/diff/", req.URL.Path)
+
+			var got models.Request
+			require.NoError(t, json.NewDecoder(req.Body).Decode(&got))
+			require.Equal(t, want, got)
+
+			return jsonResponse(`{"serverTimestamp":1718456000}`), nil
+		}),
+	}
+	client, err := api.NewClient("test-token", api.WithHTTPClient(httpClient))
+	require.NoError(t, err)
+
+	response, err := client.Sync(context.Background(), want)
+
+	require.NoError(t, err)
+	require.Equal(t, int64(1_718_456_000), response.ServerTimestamp)
+}
+
+func TestSyncSinceUsesPreviousTimestamp(t *testing.T) {
+	lastSync := time.Date(2025, 2, 3, 4, 5, 6, 0, time.UTC)
+	httpClient := &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			var got models.Request
+			require.NoError(t, json.NewDecoder(req.Body).Decode(&got))
+			require.Equal(t, lastSync.Unix(), got.ServerTimestamp)
+			require.Greater(t, got.CurrentClientTimestamp, int64(0))
+
+			return jsonResponse(`{"serverTimestamp":1738555600}`), nil
+		}),
+	}
+	client, err := api.NewClient("test-token", api.WithHTTPClient(httpClient))
+	require.NoError(t, err)
+
+	response, err := client.SyncSince(context.Background(), lastSync)
+
+	require.NoError(t, err)
+	require.Equal(t, int64(1_738_555_600), response.ServerTimestamp)
+}
+
 func TestForceSyncEntitiesCompatibilityWrapper(t *testing.T) {
 	var requestBody models.Request
 	httpClient := &http.Client{
@@ -87,4 +135,12 @@ func TestForceSyncEntitiesCompatibilityWrapper(t *testing.T) {
 		time.Unix(requestBody.ServerTimestamp, 0),
 		time.Second,
 	)
+}
+
+func jsonResponse(body string) *http.Response {
+	return &http.Response{
+		StatusCode: http.StatusOK,
+		Body:       io.NopCloser(strings.NewReader(body)),
+		Header:     make(http.Header),
+	}
 }

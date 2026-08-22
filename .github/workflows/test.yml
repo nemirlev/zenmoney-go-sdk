@@ -63,7 +63,15 @@ jobs:
           cache-dependency-path: go.sum
 
       - name: Run unit tests
-        run: go test -v ./... -coverprofile=coverage.txt
+        run: go test -v ./...
+
+      - name: Generate coverage report
+        if: matrix.coverage
+        run: >-
+          go test
+          -coverpkg=./api,./errors,./internal/client
+          -coverprofile=coverage.txt
+          ./api ./errors ./internal/client ./models
 
       - name: Run race detector
         if: matrix.coverage
@@ -75,3 +83,5 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.txt
+          disable_search: true
+          fail_ci_if_error: true
