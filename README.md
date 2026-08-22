@@ -1,7 +1,7 @@
 # ZenMoney API GO SDK.
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/nemirlev/zenmoney-go-sdk/v3.svg)](https://pkg.go.dev/github.com/nemirlev/zenmoney-go-sdk/v3)
-[![Go Report Card](https://goreportcard.com/badge/github.com/nemirlev/zenmoney-go-sdk/v3)](https://goreportcard.com/report/github.com/nemirlev/zenmoney-go-sdk/v3)
+[![golangci-lint](https://img.shields.io/github/actions/workflow/status/nemirlev/zenmoney-api/test.yml?branch=main&label=golangci-lint)](https://github.com/nemirlev/zenmoney-api/actions/workflows/test.yml)
 ![GitHub License](https://img.shields.io/github/license/nemirlev/zenmoney-go-sdk)
 ![GitHub go.mod Go version (subdirectory of monorepo)](https://img.shields.io/github/go-mod/go-version/nemirlev/zenmoney-go-sdk)
 ![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/nemirlev/zenmoney-go-sdk)
