@@ -8,6 +8,23 @@
 ## [2.0.7](https://github.com/nemirlev/zenmoney-go-sdk/compare/v2.0.6...v2.0.7) (2026-08-21)
 
 
+### ⚠️ Breaking Changes
+
+The model alignment in `99b2a5e` contains source-incompatible public API
+changes despite being released as a patch version:
+
+* Unix timestamps changed from `int` to `int64`, including sync cursors,
+  deletion stamps, entity `Changed` fields, `Transaction.Created`, and
+  subscription timestamps.
+* `Company.FullTitle` and `Reminder.Comment` changed from `string` to
+  `*string` so JSON `null` remains distinguishable from an empty string.
+* `User.SubscriptionRenewalDate` changed from `*int` to `*int64`.
+
+Consumers assigning timestamps to `int` variables must convert explicitly or
+migrate those variables to `int64`. Consumers reading nullable strings must
+check for `nil` before dereferencing them.
+
+
 ### 🐛 Bug Fixes
 
 * align models with current diff schema ([99b2a5e](https://github.com/nemirlev/zenmoney-go-sdk/commit/99b2a5e998afe32433dbb8ef66571ff9305dd3fe))
