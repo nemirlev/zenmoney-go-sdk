@@ -28,6 +28,7 @@ type EntityType string
 
 const (
 	EntityTypeInstrument     EntityType = "instrument"
+	EntityTypeCountry        EntityType = "country"
 	EntityTypeCompany        EntityType = "company"
 	EntityTypeUser           EntityType = "user"
 	EntityTypeAccount        EntityType = "account"

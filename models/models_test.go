@@ -52,3 +52,7 @@ func TestNullableFieldsAcceptValues(t *testing.T) {
 	require.Equal(t, "Example comment", *response.Reminder[0].Comment)
 	require.Equal(t, int64(4797848907), *response.User[0].SubscriptionRenewalDate)
 }
+
+func TestEntityTypeCountry(t *testing.T) {
+	require.Equal(t, models.EntityType("country"), models.EntityTypeCountry)
+}
