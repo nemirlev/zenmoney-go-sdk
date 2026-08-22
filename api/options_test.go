@@ -1,8 +1,11 @@
 package api_test
 
 import (
+	"bytes"
 	"context"
+	stdErrors "errors"
 	"io"
+	"log/slog"
 	"math"
 	"net/http"
 	"strings"
@@ -10,6 +13,7 @@ import (
 	"time"
 
 	"github.com/nemirlev/zenmoney-go-sdk/v2/api"
+	"github.com/nemirlev/zenmoney-go-sdk/v2/models"
 	"github.com/stretchr/testify/require"
 )
 
@@ -104,4 +108,59 @@ func TestWithMaxResponseSizeLimitsResponse(t *testing.T) {
 	var apiErr *api.Error
 	require.ErrorAs(t, err, &apiErr)
 	require.Equal(t, api.ErrResponseTooLarge, apiErr.Code)
+}
+
+func TestWithLoggerEmitsRedactedRetryDiagnostics(t *testing.T) {
+	var logs bytes.Buffer
+	logger := slog.New(slog.NewJSONHandler(&logs, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	}))
+	attempts := 0
+	httpClient := &http.Client{
+		Transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
+			attempts++
+			if attempts == 1 {
+				return nil, stdErrors.New("temporary failure")
+			}
+
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Body:       io.NopCloser(strings.NewReader(`{"serverTimestamp":1718456000}`)),
+				Header: http.Header{
+					"X-Request-Id": []string{"request-123"},
+				},
+			}, nil
+		}),
+	}
+	client, err := api.NewClient(
+		"secret-token",
+		api.WithHTTPClient(httpClient),
+		api.WithRetryPolicy(1, 0),
+		api.WithLogger(logger),
+	)
+	require.NoError(t, err)
+
+	_, err = client.Sync(context.Background(), models.Request{
+		Transaction: []models.Transaction{{Payee: "sensitive-payee"}},
+	})
+
+	require.NoError(t, err)
+	output := logs.String()
+	require.Contains(t, output, "ZenMoney HTTP request started")
+	require.Contains(t, output, "ZenMoney HTTP request retry scheduled")
+	require.Contains(t, output, "ZenMoney HTTP request completed")
+	require.Contains(t, output, `"endpoint":"diff/"`)
+	require.Contains(t, output, `"attempt":2`)
+	require.Contains(t, output, `"status_code":200`)
+	require.Contains(t, output, `"request_id":"request-123"`)
+	require.NotContains(t, output, "secret-token")
+	require.NotContains(t, output, "Authorization")
+	require.NotContains(t, output, "sensitive-payee")
+}
+
+func TestWithNilLoggerDisablesDiagnostics(t *testing.T) {
+	client, err := api.NewClient("test-token", api.WithLogger(nil))
+
+	require.NoError(t, err)
+	require.NotNil(t, client)
 }

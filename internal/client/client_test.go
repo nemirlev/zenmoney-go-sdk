@@ -35,6 +35,7 @@ func setupTestServer(t *testing.T, handler http.HandlerFunc) (*httptest.Server, 
 		0,
 		time.Second,
 		testMaxResponseSize,
+		nil,
 	)
 	require.NoError(t, err)
 
@@ -51,6 +52,7 @@ func TestNewClient(t *testing.T) {
 			3,
 			time.Second,
 			testMaxResponseSize,
+			nil,
 		)
 		require.NoError(t, err)
 		require.NotNil(t, client)
@@ -65,6 +67,7 @@ func TestNewClient(t *testing.T) {
 			3,
 			time.Second,
 			testMaxResponseSize,
+			nil,
 		)
 		require.Error(t, err)
 		require.Nil(t, client)
@@ -95,6 +98,7 @@ func TestNewClient(t *testing.T) {
 			0,
 			0,
 			testMaxResponseSize,
+			nil,
 		)
 		require.NoError(t, err)
 
@@ -162,6 +166,7 @@ func TestNewClient(t *testing.T) {
 					tt.retryAttempts,
 					tt.retryWaitTime,
 					tt.maxResponseSize,
+					nil,
 				)
 
 				require.Nil(t, client)
@@ -229,6 +234,7 @@ func TestSync(t *testing.T) {
 			0,
 			time.Second,
 			testMaxResponseSize,
+			nil,
 		)
 		require.NoError(t, err)
 
@@ -267,6 +273,7 @@ func TestSync(t *testing.T) {
 			1,
 			0,
 			testMaxResponseSize,
+			nil,
 		)
 		require.NoError(t, err)
 
@@ -296,6 +303,7 @@ func TestSync(t *testing.T) {
 			3,
 			5*time.Second,
 			testMaxResponseSize,
+			nil,
 		)
 		require.NoError(t, err)
 
@@ -325,6 +333,7 @@ func TestSync(t *testing.T) {
 			3,
 			time.Second,
 			testMaxResponseSize,
+			nil,
 		)
 		require.NoError(t, err)
 		started := time.Now()
@@ -366,6 +375,7 @@ func TestSync(t *testing.T) {
 					0,
 					0,
 					testMaxResponseSize,
+					nil,
 				)
 				require.NoError(t, err)
 
@@ -400,6 +410,7 @@ func TestSync(t *testing.T) {
 			0,
 			0,
 			testMaxResponseSize,
+			nil,
 		)
 		require.NoError(t, err)
 
@@ -444,6 +455,7 @@ func TestSync(t *testing.T) {
 					0,
 					0,
 					tt.limit,
+					nil,
 				)
 				require.NoError(t, err)
 
@@ -469,6 +481,7 @@ func TestSync(t *testing.T) {
 			0,
 			0,
 			testMaxResponseSize,
+			nil,
 		)
 		require.NoError(t, err)
 

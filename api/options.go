@@ -1,6 +1,7 @@
 package api
 
 import (
+	"log/slog"
 	"net/http"
 	"time"
 )
@@ -16,6 +17,7 @@ type Config struct {
 	retryAttempts   int
 	retryWaitTime   time.Duration
 	maxResponseSize int64
+	logger          *slog.Logger
 }
 
 // Option represents a function for configuring the client
@@ -30,6 +32,7 @@ func defaultConfig() *Config {
 		retryAttempts:   3,
 		retryWaitTime:   1 * time.Second,
 		maxResponseSize: DefaultMaxResponseSize,
+		logger:          slog.New(slog.DiscardHandler),
 	}
 }
 
@@ -41,33 +44,48 @@ func WithMaxResponseSize(maxBytes int64) Option {
 	}
 }
 
-// WithBaseURL sets the base URL for API requests
+// WithBaseURL sets the base URL used for API requests. The URL must be absolute,
+// use HTTP or HTTPS, and must not contain a query or fragment.
 func WithBaseURL(url string) Option {
 	return func(c *Config) {
 		c.baseURL = url
 	}
 }
 
-// WithHTTPClient sets a custom HTTP client
+// WithHTTPClient sets the HTTP client used to send requests. The client must not
+// be nil. A custom Transport can be used to add tracing, metrics, or other HTTP
+// middleware.
 func WithHTTPClient(client *http.Client) Option {
 	return func(c *Config) {
 		c.httpClient = client
 	}
 }
 
-// WithTimeout sets the timeout for API requests
+// WithTimeout limits a complete SDK operation, including all retry attempts and
+// waits between them. A zero timeout disables the SDK-level deadline; a negative
+// timeout is rejected by NewClient.
 func WithTimeout(timeout time.Duration) Option {
 	return func(c *Config) {
 		c.timeout = timeout
 	}
 }
 
-// WithRetryPolicy sets the retry policy for failed requests
-// attempts: number of retry attempts
-// waitTime: duration to wait between retries
+// WithRetryPolicy configures retries for transport failures. attempts is the
+// number of retries after the initial request, and waitTime is the delay between
+// attempts. HTTP error responses are not retried automatically.
 func WithRetryPolicy(attempts int, waitTime time.Duration) Option {
 	return func(c *Config) {
 		c.retryAttempts = attempts
 		c.retryWaitTime = waitTime
+	}
+}
+
+// WithLogger enables optional structured diagnostics using logger. The SDK logs
+// request metadata, outcomes, and retry decisions, but never authorization
+// headers or request and response bodies. Passing nil disables diagnostics.
+// Logging levels and output formatting are configured by the logger's handler.
+func WithLogger(logger *slog.Logger) Option {
+	return func(c *Config) {
+		c.logger = logger
 	}
 }

@@ -14,6 +14,7 @@ ZenMoney's financial data synchronization API, including accounts, transactions,
 
 - 🚀 Easy-to-use, idiomatic Go API
 - 🔒 Built-in retry mechanism with configurable policies
+- 🔎 Optional structured diagnostics with `log/slog`
 - 💪 Full type safety for all ZenMoney entities
 - 🛡️ Comprehensive error handling
 - ⚡ Support for all ZenMoney API operations
@@ -80,6 +81,26 @@ typed API errors.
 
 Successful response bodies are limited to 64 MiB by default. Use
 `WithMaxResponseSize` when a full synchronization is expected to be larger.
+
+### Structured diagnostics
+
+Diagnostics are disabled by default. Pass a standard `slog.Logger` to inspect
+request timing, status codes, request IDs, and transport retries:
+
+```go
+logger := slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
+    Level: slog.LevelDebug,
+}))
+
+client, err := api.NewClient(
+    "your-token-here",
+    api.WithLogger(logger),
+)
+```
+
+The logger's handler controls levels, formatting, and output. The SDK never logs
+authorization headers or request and response bodies. `DEBUG` records describe
+request starts and outcomes; `WARN` records describe scheduled retries.
 
 ## Available Operations
 
