@@ -172,3 +172,21 @@ func TestNullableFieldsAcceptValues(t *testing.T) {
 func TestEntityTypeCountry(t *testing.T) {
 	require.Equal(t, models.EntityType("country"), models.EntityTypeCountry)
 }
+
+func TestTagStaticIDIsNullableBothWays(t *testing.T) {
+	var response models.Response
+	require.NoError(t, json.Unmarshal([]byte(`{"tag":[
+		{"id":"user-category","staticId":null},
+		{"id":"system-category","staticId":"69"}
+	]}`), &response))
+	require.Nil(t, response.Tag[0].StaticID)
+	require.Equal(t, "69", *response.Tag[1].StaticID)
+
+	// A user-created category has to reach Zenmoney as "staticId": null. While
+	// StaticID was a plain string it serialized as "" and the API refused the
+	// whole request with 400 validationError: Invalid property "staticId".
+	encoded, err := json.Marshal(models.Request{Tag: []models.Tag{{ID: "user-category", Title: "Bank internals"}}})
+	require.NoError(t, err)
+	require.Contains(t, string(encoded), `"staticId":null`)
+	require.NotContains(t, string(encoded), `"staticId":""`)
+}

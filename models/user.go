@@ -129,8 +129,9 @@ type Tag struct {
 	// ID of the parent tag. The parent category. Nested level should not exceed 1.
 	Parent *string `json:"parent"` // Tag.id
 
-	// Static ID of the tag.
-	StaticID string `json:"staticId"` // Статический ID категории
+	// Static ID of the tag. Only system categories carry one; a user-created
+	// category must send null, so this stays a pointer.
+	StaticID *string `json:"staticId"` // Статический ID категории
 }
 
 // Budget - user budget
