@@ -5,6 +5,14 @@
 - Update Go version and dependencies
 - Update Go version on github actions
 - Update CI workflow actions and matrix usage
+## [3.0.2](https://github.com/nemirlev/zenmoney-go-sdk/compare/v3.0.1...v3.0.2) (2026-08-25)
+
+
+### 🐛 Bug Fixes
+
+* make Tag.staticId nullable ([a331a16](https://github.com/nemirlev/zenmoney-go-sdk/commit/a331a163da27b9d44913ae0b73b3636c3b4bfa76))
+* make Tag.staticId nullable ([3349f93](https://github.com/nemirlev/zenmoney-go-sdk/commit/3349f93a09772469acd473a28780045c7e9d339e)), closes [#26](https://github.com/nemirlev/zenmoney-go-sdk/issues/26)
+
 ## [3.0.1](https://github.com/nemirlev/zenmoney-go-sdk/compare/v3.0.0...v3.0.1) (2026-08-22)
 
 
